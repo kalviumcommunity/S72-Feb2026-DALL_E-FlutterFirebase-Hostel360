@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User documents
+    match /users/{userId} {
+      // Users can read their own document
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can create their own document
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Users can update their own document
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Prevent account deletion
+      allow delete: if false;
+    }
+    
+    // Complaint documents
+    match /complaints/{complaintId} {
+      // Helper function to check if user is admin
+      function isAdmin() {
+        return request.auth != null && 
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      }
+      
+      // Students can read their own complaints, admins can read all
+      allow read: if request.auth != null && 
+                     (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Students can create complaints with their own userId and valid description
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.description.size() > 0;
+      
+      // Only admins can update complaint status
+      allow update: if request.auth != null && isAdmin();
+      
+      // No one can delete complaints
+      allow delete: if false;
+    }
+  }
+}

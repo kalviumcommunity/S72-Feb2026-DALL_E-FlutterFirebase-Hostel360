@@ -1,0 +1,28 @@
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-south1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "hostel360-ccad5",
+          "appId": "1:195174591857:android:0c48da05a2fda0d4921ad0",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "hostel360-ccad5",
+          "configurations": {
+            "android": "1:195174591857:android:0c48da05a2fda0d4921ad0",
+            "web": "1:195174591857:web:573a010319007d73921ad0"
+          }
+        }
+      }
+    }
+  }
+}
