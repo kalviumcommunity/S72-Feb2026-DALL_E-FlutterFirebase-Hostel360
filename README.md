@@ -264,3 +264,128 @@ Async-first execution
 Fine-grained state updates
 
 Flutter maintains a stable frame rate and smooth user experience even under real-time data loads.
+
+Case Study: “The App That Looked Perfect, But Only on One Phone”
+Problem: Why Static Designs Fail Across Devices
+
+Early UI iterations of Hostel360 were designed using fixed pixel values based on Figma mockups. While this looked perfect on a reference device, it failed on:
+
+Smaller phones → overlapping text, clipped buttons
+
+Larger tablets → excessive whitespace, awkward spacing
+
+Different platforms (Android vs iOS) → inconsistent visual balance
+
+Root Causes of Static Layouts
+
+Fixed Widths & Heights
+
+Container(width: 300, height: 200)
+
+
+Works only for a specific screen size
+
+Breaks on smaller or larger devices
+
+Rigid Padding & Margins
+
+Absolute spacing doesn’t scale with screen density
+
+Leads to crowded or overly sparse layouts
+
+Ignoring Aspect Ratios
+
+Phones, tablets, and foldables all have different proportions
+
+A one-size layout fails visually and functionally
+
+Solution: Responsive Flutter Layout Strategy
+
+To preserve the original Figma design intent while supporting all screen sizes, Hostel360 adopts Flutter’s adaptive layout system.
+
+1. MediaQuery – Screen-Aware Sizing
+
+Used to scale UI elements relative to screen dimensions instead of hardcoded pixels.
+
+final screenWidth = MediaQuery.of(context).size.width;
+
+Padding(
+  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+)
+
+
+✅ Ensures consistent spacing on small phones and large tablets
+✅ Maintains proportional design across devices
+
+2. Flexible & Expanded – Dynamic Space Distribution
+
+Prevents overflow and overlap in rows and columns.
+
+Row(
+  children: [
+    Expanded(child: ComplaintCard()),
+    Flexible(child: StatusBadge()),
+  ],
+)
+
+
+✅ Automatically adjusts based on available space
+✅ Prevents UI breakage on narrow screens
+✅ Keeps layouts fluid instead of rigid
+
+3. LayoutBuilder – Constraint-Based Decisions
+
+Used where layout behavior must change based on screen width.
+
+LayoutBuilder(
+  builder: (context, constraints) {
+    if (constraints.maxWidth > 600) {
+      return TabletLayout();
+    } else {
+      return MobileLayout();
+    }
+  },
+)
+
+
+✅ Enables adaptive layouts instead of stretched ones
+✅ Allows tablet-specific UI without duplicating screens
+✅ Preserves usability across form factors
+
+4. Responsive Typography & Components
+
+Font sizes and UI elements scale based on screen size:
+
+Text(
+  'Complaint Status',
+  style: Theme.of(context).textTheme.titleMedium,
+)
+
+
+Combined with:
+
+ThemeData
+
+Platform-aware defaults
+
+Scaled paddings instead of fixed font sizes
+
+✅ Improves readability
+✅ Prevents text clipping
+✅ Ensures accessibility consistency
+
+Result: Design Fidelity + Cross-Device Reliability
+
+By replacing static pixel-based layouts with responsive Flutter widgets:
+
+✅ No overlapping UI on small phones
+
+✅ Balanced spacing on tablets
+
+✅ Consistent look across Android & iOS
+
+✅ Original Figma design intent preserved
+
+✅ Future-proof for new screen sizes
+
+This approach ensures Hostel360 delivers a polished, production-grade user experience, regardless of device size or platform — solving the exact problem seen in the FlexiFit case study.
