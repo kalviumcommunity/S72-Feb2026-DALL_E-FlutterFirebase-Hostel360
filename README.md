@@ -389,3 +389,18 @@ By replacing static pixel-based layouts with responsive Flutter widgets:
 ✅ Future-proof for new screen sizes
 
 This approach ensures Hostel360 delivers a polished, production-grade user experience, regardless of device size or platform — solving the exact problem seen in the FlexiFit case study.
+
+## API Documentation (Bruno)
+
+All Firebase REST API requests used in this project are documented using Bruno.
+
+Location:
+docs/bruno/Flutter-Firebase API Documentation/
+
+Includes:
+- Authentication endpoints
+- Firestore operations
+- Storage requests
+- Example request bodies
+- Example responses
+- Environment variables for tokens
