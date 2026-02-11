@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Flutter-Firebase API Documentation",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
