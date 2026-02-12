@@ -1,57 +1,31 @@
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  final firebase_auth.FirebaseAuth _firebaseAuth;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  AuthService({firebase_auth.FirebaseAuth? firebaseAuth})
-      : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance;
-
-  /// Sign up with email and password
-  /// Returns UserCredential on success, throws exception on failure
-  Future<firebase_auth.UserCredential> signUp(
-      String email, String password) async {
-    try {
-      return await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      rethrow;
-    }
+  Future<UserCredential> signUp(String email, String password) async {
+    return await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  /// Sign in with email and password
-  /// Returns UserCredential on success, throws exception on failure
-  Future<firebase_auth.UserCredential> signIn(
-      String email, String password) async {
-    try {
-      return await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      rethrow;
-    }
+  Future<UserCredential> signIn(String email, String password) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  /// Sign out current user
   Future<void> signOut() async {
-    try {
-      await _firebaseAuth.signOut();
-    } catch (e) {
-      rethrow;
-    }
+    await _auth.signOut();
   }
 
-  /// Stream of authentication state changes
-  /// Emits User when signed in, null when signed out
-  Stream<firebase_auth.User?> authStateChanges() {
-    return _firebaseAuth.authStateChanges();
+  Stream<User?> authStateChanges() {
+    return _auth.authStateChanges();
   }
 
-  /// Get current authenticated user
-  /// Returns User if signed in, null otherwise
-  firebase_auth.User? getCurrentUser() {
-    return _firebaseAuth.currentUser;
+  User? getCurrentUser() {
+    return _auth.currentUser;
   }
 }
