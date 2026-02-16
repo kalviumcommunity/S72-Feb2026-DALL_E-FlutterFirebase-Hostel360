@@ -6,16 +6,10 @@ enum ComplaintStatus {
   final String displayName;
   const ComplaintStatus(this.displayName);
 
-  static ComplaintStatus fromString(String status) {
-    switch (status) {
-      case 'Pending':
-        return ComplaintStatus.pending;
-      case 'In Progress':
-        return ComplaintStatus.inProgress;
-      case 'Resolved':
-        return ComplaintStatus.resolved;
-      default:
-        throw ArgumentError('Invalid status: $status');
-    }
+  static ComplaintStatus fromString(String value) {
+    return ComplaintStatus.values.firstWhere(
+      (status) => status.displayName.toLowerCase() == value.toLowerCase(),
+      orElse: () => ComplaintStatus.pending,
+    );
   }
 }
