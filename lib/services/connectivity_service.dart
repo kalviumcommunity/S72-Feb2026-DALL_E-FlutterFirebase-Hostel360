@@ -10,19 +10,19 @@ class ConnectivityService {
   bool _isOnline = true;
 
   ConnectivityService() {
-    _connectivity.onConnectivityChanged.listen((result) {
-      _updateConnectionStatus(result);
+    _connectivity.onConnectivityChanged.listen((results) {
+      _updateConnectionStatus(results);
     });
     _checkInitialConnection();
   }
 
   Future<void> _checkInitialConnection() async {
-    final result = await _connectivity.checkConnectivity();
-    _updateConnectionStatus(result);
+    final results = await _connectivity.checkConnectivity();
+    _updateConnectionStatus(results);
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
-    _isOnline = result != ConnectivityResult.none;
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
+    _isOnline = !results.contains(ConnectivityResult.none) && results.isNotEmpty;
     _connectionStatusController.add(_isOnline);
   }
 

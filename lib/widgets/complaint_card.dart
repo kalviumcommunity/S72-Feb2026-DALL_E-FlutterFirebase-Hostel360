@@ -81,7 +81,7 @@ class _ComplaintCardState extends State<ComplaintCard>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Submitted: ${_formatDate(widget.complaint.createdAt)}',
+                  'Submitted: ${_formatDate(widget.complaint.timestamp)}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey,
                       ),
