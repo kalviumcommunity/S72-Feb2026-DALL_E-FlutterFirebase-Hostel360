@@ -24,6 +24,9 @@ dependencies:
   
   # Connectivity
   connectivity_plus: ^7.0.0
+  
+  # UI
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:

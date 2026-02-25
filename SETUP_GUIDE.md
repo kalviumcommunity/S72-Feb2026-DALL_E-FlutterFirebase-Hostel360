@@ -1,165 +1,109 @@
 # Hostel360 Setup Guide
 
-## Initial Setup Checklist
+## Current Branch: feature/task-16-screen-transitions
 
-### 1. Flutter Environment Setup
-- [ ] Install Flutter SDK (3.0.0+)
-- [ ] Run `flutter doctor` to verify installation
-- [ ] Set up Android Studio or Xcode for mobile development
+This branch has:
+- ✅ Login/Signup screens
+- ✅ Theme management
+- ✅ Page transitions
+- ✅ Auth and Complaint providers
+- ⚠️ Missing: UI widgets (they're on feature/task-9-ui-components branch)
 
-### 2. Firebase Project Setup
+## Quick Setup to Run
 
-#### Create Firebase Project
+### 1. Add Firebase Configuration
+
+**CRITICAL:** The app won't run without these files!
+
+#### For Android:
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Click "Add project"
-3. Name it "Hostel360"
-4. Disable Google Analytics (optional)
-5. Click "Create project"
+2. Select your project
+3. Go to Project Settings → Your Apps → Android App
+4. Download `google-services.json`
+5. Place it here: `android/app/google-services.json`
 
-#### Enable Firebase Services
-1. **Authentication**
-   - Go to Authentication → Sign-in method
-   - Enable "Email/Password" provider
-   - Click "Save"
+#### For iOS:
+1. In Firebase Console → Project Settings → Your Apps → iOS App
+2. Download `GoogleService-Info.plist`
+3. Place it here: `ios/Runner/GoogleService-Info.plist`
 
-2. **Cloud Firestore**
-   - Go to Firestore Database
-   - Click "Create database"
-   - Start in "Test mode" (we'll deploy security rules later)
-   - Choose a location (e.g., us-central)
-   - Click "Enable"
-
-3. **Cloud Messaging**
-   - Go to Project Settings → Cloud Messaging
-   - Note your Server Key (for later use)
-
-### 3. Configure Firebase for Flutter
-
-#### Install Firebase CLI
-```bash
-npm install -g firebase-tools
-firebase login
-```
-
-#### Install FlutterFire CLI
-```bash
-dart pub global activate flutterfire_cli
-```
-
-#### Configure Firebase
-```bash
-cd S72-Feb2026-DALL_E-FlutterFirebase-Hostel360
-flutterfire configure
-```
-
-This command will:
-- Create/update `firebase_options.dart` with your Firebase credentials
-- Generate platform-specific configuration files
-- Link your Flutter app to your Firebase project
-
-Select your Firebase project when prompted, and choose the platforms you want to support (Android, iOS, Web).
-
-### 4. Add Platform-Specific Configuration
-
-#### Android Configuration
-1. Download `google-services.json` from Firebase Console:
-   - Go to Project Settings → Your apps
-   - Click on your Android app
-   - Download `google-services.json`
-   
-2. Place it in: `android/app/google-services.json`
-
-3. The `android/app/build.gradle` already includes Firebase dependencies
-
-#### iOS Configuration
-1. Download `GoogleService-Info.plist` from Firebase Console:
-   - Go to Project Settings → Your apps
-   - Click on your iOS app
-   - Download `GoogleService-Info.plist`
-   
-2. Place it in: `ios/Runner/GoogleService-Info.plist`
-
-3. Open `ios/Runner.xcworkspace` in Xcode
-4. Drag `GoogleService-Info.plist` into the Runner folder in Xcode
-
-### 5. Deploy Firestore Security Rules
-
-```bash
-# Initialize Firebase in your project (if not already done)
-firebase init firestore
-
-# Deploy security rules
-firebase deploy --only firestore:rules
-```
-
-The security rules are already configured in `firestore.rules` and enforce:
-- Students can only access their own complaints
-- Admins can access all complaints
-- All operations require authentication
-
-### 6. Install Dependencies
+### 2. Install Dependencies
 
 ```bash
 flutter pub get
 ```
 
-### 7. Verify Setup
+### 3. Run the App
 
 ```bash
-# Check Flutter setup
-flutter doctor
-
-# Run the app
 flutter run
 ```
 
-You should see "Hostel360 - Setup Complete" on the screen.
+Or in Android Studio: Click the green Run button (▶️)
 
-### 8. Create Test Users (Optional)
+## What You'll See
 
-You can create test users directly in Firebase Console:
-1. Go to Authentication → Users
-2. Click "Add user"
-3. Create a student user: `student@test.com` / `password123`
-4. Create an admin user: `admin@test.com` / `password123`
+Since this branch doesn't have all the UI components, you'll see:
+- ✅ Login screen (working)
+- ✅ Signup screen (working)
+- ⚠️ After login: May have errors because home screens are on other branches
 
-Then manually add role documents in Firestore:
-1. Go to Firestore Database
-2. Create collection: `users`
-3. Add document with ID matching the user's UID:
-   ```json
-   {
-     "uid": "user_uid_here",
-     "email": "student@test.com",
-     "role": "student",
-     "createdAt": "2024-02-06T00:00:00Z"
-   }
-   ```
+## To Test Full Functionality
 
-## Troubleshooting
+### Option 1: Merge All Feature Branches
+1. Create and merge PR for `feature/task-9-ui-components` first
+2. Then merge other feature branches in order
+3. All features will work together
 
-### Firebase not initialized
-- Ensure `firebase_options.dart` exists and has valid credentials
-- Run `flutterfire configure` again
+### Option 2: Test Individual Branches
 
-### Build errors on Android
-- Ensure `google-services.json` is in `android/app/`
-- Check that `minSdkVersion` is at least 21 in `android/app/build.gradle`
+**Test UI Components (Task 9):**
+```bash
+git checkout feature/task-9-ui-components
+flutter run
+```
 
-### Build errors on iOS
-- Ensure `GoogleService-Info.plist` is added to Xcode project
-- Run `pod install` in the `ios/` directory
+**Test Student Interface (Task 10):**
+```bash
+git checkout feature/task-10-student-interface
+flutter run
+```
 
-### Firestore permission denied
-- Deploy security rules: `firebase deploy --only firestore:rules`
-- Ensure users are authenticated before accessing Firestore
+**Test Admin Interface (Task 11):**
+```bash
+git checkout feature/task-11-admin-interface
+flutter run
+```
+
+## Common Errors & Solutions
+
+### Error: "No Firebase App"
+**Solution:** Add `google-services.json` and `GoogleService-Info.plist`
+
+### Error: "Widget not found"
+**Solution:** You're on a branch that doesn't have all widgets. Switch to a different branch or merge the feature branches.
+
+### Error: "Build failed"
+**Solution:**
+```bash
+flutter clean
+flutter pub get
+flutter run
+```
+
+## Firebase Setup (If Not Done)
+
+1. Create a Firebase project at https://console.firebase.google.com/
+2. Enable Authentication → Email/Password
+3. Create Firestore Database
+4. Add Android/iOS apps to your Firebase project
+5. Download configuration files
 
 ## Next Steps
 
-After setup is complete, proceed with implementing the remaining tasks:
-- Task 2: Implement data models and enums
-- Task 3: Implement form validation module
-- Task 4: Implement authentication service and provider
-- And so on...
-
-Refer to `.kiro/specs/hostel360/tasks.md` for the complete implementation plan.
+1. Add Firebase config files
+2. Run `flutter pub get`
+3. Run `flutter run`
+4. Test login/signup functionality
+5. Create pull requests for feature branches
+6. Merge them to get full functionality
