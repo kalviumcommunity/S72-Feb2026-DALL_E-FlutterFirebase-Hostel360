@@ -68,10 +68,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     final success = await complaintProvider.submitComplaint(
-      _selectedCategory,
-      _descriptionController.text.trim(),
-      authProvider.currentUser!.uid,
-      authProvider.currentUser!.email ?? '',
+      category: _selectedCategory,
+      description: _descriptionController.text.trim(),
+      userId: authProvider.currentUser!.uid,
+      userEmail: authProvider.currentUser!.email ?? '',
     );
 
     if (mounted && success) {
