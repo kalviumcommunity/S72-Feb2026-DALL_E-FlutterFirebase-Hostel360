@@ -8,8 +8,8 @@ class AppTheme {
   // Color System - Light Theme
   static const Color _lightBackground = Color(0xFFF8F9FB);
   static const Color _lightSurface = Color(0xFFFFFFFF);
-  static const Color _lightPrimary = Color(0xFF4F46E5); // Deep indigo
-  static const Color _lightSecondary = Color(0xFF06B6D4); // Soft teal
+  static const Color _lightPrimary = Color(0xFF4F46E5); // Deep indigo - PRIMARY
+  static const Color _lightSecondary = Color(0xFF06B6D4); // Soft teal - ACCENT ONLY
   static const Color _lightError = Color(0xFFEF4444);
   static const Color _lightOnBackground = Color(0xFF1F2937);
   static const Color _lightOnSurface = Color(0xFF374151);
@@ -17,8 +17,8 @@ class AppTheme {
   // Color System - Dark Theme
   static const Color _darkBackground = Color(0xFF0F1115);
   static const Color _darkSurface = Color(0xFF1A1D24);
-  static const Color _darkPrimary = Color(0xFF6366F1); // Slightly desaturated
-  static const Color _darkSecondary = Color(0xFF22D3EE);
+  static const Color _darkPrimary = Color(0xFF6366F1); // Slightly desaturated - PRIMARY
+  static const Color _darkSecondary = Color(0xFF22D3EE); // ACCENT ONLY
   static const Color _darkError = Color(0xFFF87171);
   static const Color _darkOnBackground = Color(0xFFE6E6E6);
   static const Color _darkOnSurface = Color(0xFFD1D5DB);
