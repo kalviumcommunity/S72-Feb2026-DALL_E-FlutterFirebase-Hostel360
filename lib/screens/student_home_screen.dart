@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/complaint_provider.dart';
@@ -10,6 +11,8 @@ import '../core/widgets/complaint_card.dart';
 import '../core/widgets/empty_state.dart';
 import '../core/widgets/loading_state.dart';
 import '../core/widgets/section_header.dart';
+import '../core/widgets/success_animation.dart';
+import '../core/constants/motion.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -23,6 +26,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   String _selectedCategory = 'Maintenance';
+  String _selectedPriority = 'Medium';
+  bool _showSuccessAnimation = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -63,6 +68,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
   Future<void> _submitComplaint() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Haptic feedback
+    HapticFeedback.mediumImpact();
+
     final complaintProvider =
         Provider.of<ComplaintProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -72,10 +80,28 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
       description: _descriptionController.text.trim(),
       userId: authProvider.currentUser!.uid,
       userEmail: authProvider.currentUser!.email ?? '',
+      priority: _selectedPriority,
     );
 
     if (mounted && success) {
+      // Show success animation
+      setState(() => _showSuccessAnimation = true);
+      
+      // Haptic feedback for success
+      HapticFeedback.lightImpact();
+      
+      // Hide animation after delay
+      Future.delayed(AppMotion.successAnimation, () {
+        if (mounted) {
+          setState(() => _showSuccessAnimation = false);
+        }
+      });
+
       _descriptionController.clear();
+      setState(() {
+        _selectedPriority = 'Medium';
+      });
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(
@@ -90,8 +116,24 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          duration: const Duration(seconds: 2),
         ),
       );
+    }
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'urgent':
+        return const Color(0xFFEF4444); // Red
+      case 'high':
+        return const Color(0xFFF97316); // Orange
+      case 'medium':
+        return const Color(0xFFF59E0B); // Amber
+      case 'low':
+        return const Color(0xFF10B981); // Green
+      default:
+        return const Color(0xFF6B7280); // Gray
     }
   }
 
@@ -101,9 +143,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
     final authProvider = Provider.of<AuthProvider>(context);
     final complaintProvider = Provider.of<ComplaintProvider>(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
@@ -194,6 +238,42 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
                             onChanged: (value) {
                               setState(() {
                                 _selectedCategory = value!;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // Priority Dropdown
+                          DropdownButtonFormField<String>(
+                            value: _selectedPriority,
+                            decoration: InputDecoration(
+                              labelText: 'Priority',
+                              prefixIcon: const Icon(Icons.flag_rounded),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            items: ['Low', 'Medium', 'High', 'Urgent']
+                                .map((priority) => DropdownMenuItem(
+                                      value: priority,
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              color: _getPriorityColor(priority),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(priority),
+                                        ],
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedPriority = value!;
                               });
                             },
                           ),
@@ -301,6 +381,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen>
           ),
         ),
       ),
+        ),
+        // Success Animation Overlay
+        if (_showSuccessAnimation)
+          const Positioned.fill(
+            child: SuccessAnimation(),
+          ),
+      ],
     );
   }
 }
