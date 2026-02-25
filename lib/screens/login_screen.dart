@@ -301,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 PageRouteBuilder(
                                   pageBuilder: (context, animation,
                                           secondaryAnimation) =>
-                                      const SignUpScreen(),
+                                      const SignupScreen(),
                                   transitionsBuilder: (context, animation,
                                       secondaryAnimation, child) {
                                     return FadeTransition(
