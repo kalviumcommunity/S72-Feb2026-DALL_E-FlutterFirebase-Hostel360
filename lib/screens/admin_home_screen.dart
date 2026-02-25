@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -5,10 +6,14 @@ import '../providers/complaint_provider.dart';
 import '../providers/theme_provider.dart';
 import '../core/widgets/custom_card.dart';
 import '../core/widgets/status_badge.dart';
+import '../core/widgets/priority_badge.dart';
 import '../core/widgets/empty_state.dart';
 import '../core/widgets/loading_state.dart';
 import '../core/widgets/section_header.dart';
+import '../core/widgets/filter_chip_group.dart';
+import '../core/constants/motion.dart';
 import '../models/complaint.dart';
+import '../widgets/add_note_dialog.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -23,6 +28,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   final Map<String, bool> _updatingStatus = {};
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -52,7 +59,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(AppMotion.searchDebounce, () {
+      final complaintProvider =
+          Provider.of<ComplaintProvider>(context, listen: false);
+      complaintProvider.setSearchQuery(query);
+    });
   }
 
   Future<void> _updateComplaintStatus(
@@ -203,6 +221,105 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                     },
                   ),
                   const SizedBox(height: 32),
+
+                  // Search Bar
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Search by description, email, category...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear_rounded),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Filter Chips
+                  Consumer<ComplaintProvider>(
+                    builder: (context, provider, child) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Category Filter
+                          FilterChipGroup(
+                            label: 'Category',
+                            options: const ['All', 'Maintenance', 'Cleanliness', 'Food', 'Other'],
+                            selectedOption: provider.filterCategory ?? 'All',
+                            onSelected: (value) {
+                              provider.setFilterCategory(value == 'All' ? null : value);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // Status Filter
+                          FilterChipGroup(
+                            label: 'Status',
+                            options: const ['All', 'Pending', 'In Progress', 'Resolved'],
+                            selectedOption: provider.filterStatus ?? 'All',
+                            onSelected: (value) {
+                              provider.setFilterStatus(value == 'All' ? null : value);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          // Priority Filter
+                          FilterChipGroup(
+                            label: 'Priority',
+                            options: const ['All', 'Urgent', 'High', 'Medium', 'Low'],
+                            selectedOption: provider.filterPriority ?? 'All',
+                            onSelected: (value) {
+                              provider.setFilterPriority(value == 'All' ? null : value);
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Sort and Result Count Row
+                  Consumer<ComplaintProvider>(
+                    builder: (context, provider, child) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${provider.complaints.length} result${provider.complaints.length != 1 ? 's' : ''}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Sort Dropdown
+                          DropdownButton<String>(
+                            value: provider.sortBy,
+                            icon: const Icon(Icons.sort_rounded),
+                            underline: const SizedBox(),
+                            items: const [
+                              DropdownMenuItem(value: 'newest', child: Text('Newest')),
+                              DropdownMenuItem(value: 'oldest', child: Text('Oldest')),
+                              DropdownMenuItem(value: 'priority', child: Text('Priority')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                provider.setSortBy(value);
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   // All Complaints Section
                   const SectionHeader(
@@ -399,7 +516,14 @@ class _AdminComplaintCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                StatusBadge(status: complaint.status),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    StatusBadge(status: complaint.status),
+                    const SizedBox(height: 4),
+                    PriorityBadge(priority: complaint.priority),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -425,6 +549,46 @@ class _AdminComplaintCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            // Admin Notes Button
+            if (complaint.notes.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: theme.colorScheme.secondary.withOpacity(0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.note_outlined,
+                      size: 16,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${complaint.notes.length} note${complaint.notes.length != 1 ? 's' : ''}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.secondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            // Add Note Button
+            OutlinedButton.icon(
+              onPressed: () => _showAddNoteDialog(context, complaint),
+              icon: const Icon(Icons.add_comment_outlined, size: 18),
+              label: const Text('Add Note'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.secondary,
+              ),
             ),
             const SizedBox(height: 16),
             // Status Update Dropdown
@@ -494,5 +658,44 @@ class _AdminComplaintCard extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+
+  void _showAddNoteDialog(BuildContext context, Complaint complaint) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AddNoteDialog(
+        complaintId: complaint.id,
+        onAddNote: (noteText, isAdminNote) async {
+          final complaintProvider =
+              Provider.of<ComplaintProvider>(context, listen: false);
+          
+          final success = await complaintProvider.addNote(
+            complaintId: complaint.id,
+            text: noteText,
+            authorId: authProvider.currentUser!.uid,
+            authorEmail: authProvider.currentUser!.email ?? '',
+            isAdminNote: isAdminNote,
+          );
+
+          if (success && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 12),
+                    Text('Note added successfully'),
+                  ],
+                ),
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 }
