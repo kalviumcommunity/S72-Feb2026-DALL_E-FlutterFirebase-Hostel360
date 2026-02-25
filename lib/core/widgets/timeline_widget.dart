@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/complaint.dart';
-import 'package:intl/intl.dart';
 
 class TimelineWidget extends StatelessWidget {
   final List<StatusTimestamp> statusHistory;
@@ -49,6 +48,18 @@ class TimelineWidget extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+
+  String _formatFullDate(DateTime timestamp) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final month = months[timestamp.month - 1];
+    final day = timestamp.day;
+    final year = timestamp.year;
+    final hour = timestamp.hour > 12 ? timestamp.hour - 12 : (timestamp.hour == 0 ? 12 : timestamp.hour);
+    final minute = timestamp.minute.toString().padLeft(2, '0');
+    final period = timestamp.hour >= 12 ? 'PM' : 'AM';
+    
+    return '$month $day, $year • $hour:$minute $period';
   }
 
   @override
@@ -134,7 +145,7 @@ class TimelineWidget extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          DateFormat('MMM d, y • h:mm a').format(item.timestamp),
+                          _formatFullDate(item.timestamp),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.4),
                           ),
