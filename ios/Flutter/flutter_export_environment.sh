@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
-export "FLUTTER_ROOT=/Users/uday/Desktop/DALL-E/flutter"
-export "FLUTTER_APPLICATION_PATH=/Users/uday/Desktop/DALL-E/S72-Feb2026-DALL_E-FlutterFirebase-Hostel360"
+export "FLUTTER_ROOT=/Users/uday/Developer/flutter"
+export "FLUTTER_APPLICATION_PATH=/Users/uday/Desktop/everything/DALL-E/S72-Feb2026-DALL_E-FlutterFirebase-Hostel360"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"
