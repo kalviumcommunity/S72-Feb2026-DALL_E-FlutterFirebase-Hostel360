@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/complaint_provider.dart';
-import '../providers/theme_provider.dart';
-import '../core/widgets/custom_button.dart';
-import '../core/widgets/custom_text_field.dart';
-import '../core/widgets/custom_card.dart';
-import '../core/widgets/complaint_card.dart';
-import '../core/widgets/empty_state.dart';
-import '../core/widgets/loading_state.dart';
-import '../core/widgets/section_header.dart';
-import '../core/widgets/success_animation.dart';
-import '../core/constants/motion.dart';
+import '../models/complaint.dart';
+import '../widgets/complaint_card.dart';
+import '../widgets/empty_state_widget.dart';
+import '../widgets/offline_indicator.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -21,373 +14,148 @@ class StudentHomeScreen extends StatefulWidget {
   State<StudentHomeScreen> createState() => _StudentHomeScreenState();
 }
 
-class _StudentHomeScreenState extends State<StudentHomeScreen>
-    with SingleTickerProviderStateMixin {
+class _StudentHomeScreenState extends State<StudentHomeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   String _selectedCategory = 'Maintenance';
-  String _selectedPriority = 'Medium';
-  bool _showSuccessAnimation = false;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.05),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _animationController.forward();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final complaintProvider =
-          Provider.of<ComplaintProvider>(context, listen: false);
-      complaintProvider.watchUserComplaints(authProvider.currentUser!.uid);
-    });
-  }
+  final List<String> _categories = [
+    'Maintenance',
+    'Cleanliness',
+    'Food',
+    'Security',
+    'Other'
+  ];
 
   @override
   void dispose() {
-    _animationController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _submitComplaint() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    // Haptic feedback
-    HapticFeedback.mediumImpact();
-
-    final complaintProvider =
-        Provider.of<ComplaintProvider>(context, listen: false);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    final success = await complaintProvider.submitComplaint(
-      category: _selectedCategory,
-      description: _descriptionController.text.trim(),
-      userId: authProvider.currentUser!.uid,
-      userEmail: authProvider.currentUser!.email ?? '',
-      priority: _selectedPriority,
-    );
-
-    if (mounted && success) {
-      // Show success animation
-      setState(() => _showSuccessAnimation = true);
-      
-      // Haptic feedback for success
-      HapticFeedback.lightImpact();
-      
-      // Hide animation after delay
-      Future.delayed(AppMotion.successAnimation, () {
-        if (mounted) {
-          setState(() => _showSuccessAnimation = false);
-        }
-      });
-
-      _descriptionController.clear();
-      setState(() {
-        _selectedPriority = 'Medium';
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Complaint submitted successfully'),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'urgent':
-        return const Color(0xFFEF4444); // Red
-      case 'high':
-        return const Color(0xFFF97316); // Orange
-      case 'medium':
-        return const Color(0xFFF59E0B); // Amber
-      case 'low':
-        return const Color(0xFF10B981); // Green
-      default:
-        return const Color(0xFF6B7280); // Gray
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final authProvider = Provider.of<AuthProvider>(context);
     final complaintProvider = Provider.of<ComplaintProvider>(context);
+    final userId = authProvider.user!.uid;
+    final userEmail = authProvider.user!.email!;
 
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: theme.scaffoldBackgroundColor,
-          appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Hostel360',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode_rounded
-                  : Icons.dark_mode_rounded,
-            ),
-            onPressed: () {
-              Provider.of<ThemeProvider>(context, listen: false).toggleTheme();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: () async {
-              await authProvider.signOut();
-            },
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Complaints'),
+        actions: const [
+          OfflineIndicator(),
+          SizedBox(width: 16),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Welcome Section
-                  Text(
-                    'Welcome back!',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    authProvider.currentUser?.email ?? '',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Submit Complaint Section
-                  const SectionHeader(
-                    title: 'Submit Complaint',
-                    subtitle: 'Let us know about any issues',
-                  ),
-                  const SizedBox(height: 16),
-                  CustomCard(
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Category Dropdown
-                          DropdownButtonFormField<String>(
-                            initialValue: _selectedCategory,
-                            decoration: InputDecoration(
-                              labelText: 'Category',
-                              prefixIcon: const Icon(Icons.category_rounded),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: [
-                              'Maintenance',
-                              'Cleanliness',
-                              'Food',
-                              'Other'
-                            ]
-                                .map((category) => DropdownMenuItem(
-                                      value: category,
-                                      child: Text(category),
-                                    ))
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedCategory = value!;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          // Priority Dropdown
-                          DropdownButtonFormField<String>(
-                            value: _selectedPriority,
-                            decoration: InputDecoration(
-                              labelText: 'Priority',
-                              prefixIcon: const Icon(Icons.flag_rounded),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: ['Low', 'Medium', 'High', 'Urgent']
-                                .map((priority) => DropdownMenuItem(
-                                      value: priority,
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 12,
-                                            height: 12,
-                                            decoration: BoxDecoration(
-                                              color: _getPriorityColor(priority),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(priority),
-                                        ],
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedPriority = value!;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          // Description Field
-                          CustomTextField(
-                            controller: _descriptionController,
-                            label: 'Description',
-                            hint: 'Describe your complaint in detail...',
-                            prefixIcon: Icons.description_rounded,
-                            maxLines: 4,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a description';
-                              }
-                              if (value.trim().length < 10) {
-                                return 'Description must be at least 10 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          // Submit Button
-                          CustomButton(
-                            text: 'Submit Complaint',
-                            onPressed: complaintProvider.isLoading
-                                ? null
-                                : _submitComplaint,
-                            isLoading: complaintProvider.isLoading,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // My Complaints Section
-                  const SectionHeader(
-                    title: 'My Complaints',
-                    subtitle: 'Track your submitted complaints',
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Complaints List
-                  Consumer<ComplaintProvider>(
-                    builder: (context, provider, child) {
-                      final complaints = provider.complaints
-                          .where((c) => c.userId == authProvider.currentUser!.uid)
-                          .toList();
-
-                      if (provider.isLoading && complaints.isEmpty) {
-                        return const LoadingState(
-                          message: 'Loading your complaints...',
-                        );
-                      }
-
-                      if (provider.errorMessage != null) {
-                        return CustomCard(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.error_outline_rounded,
-                                  color: theme.colorScheme.error,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    provider.errorMessage!,
-                                    style: TextStyle(
-                                      color: theme.colorScheme.error,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      if (complaints.isEmpty) {
-                        return const EmptyState(
-                          icon: Icons.inbox_rounded,
-                          title: 'No complaints yet',
-                          message:
-                              'Your submitted complaints will appear here',
-                        );
-                      }
-
-                      return Column(
-                        children: complaints.map((complaint) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: ComplaintCard(complaint: complaint),
-                          );
-                        }).toList(),
+                    items: _categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
                       );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategory = value!;
+                      });
                     },
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      border: const OutlineInputBorder(),
+                      counterText:
+                          '${_descriptionController.text.length}/500 characters',
+                    ),
+                    maxLines: 3,
+                    maxLength: 500,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a description';
+                      }
+                      return null;
+                    },
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: complaintProvider.isLoading
+                        ? null
+                        : () async {
+                            if (_formKey.currentState!.validate()) {
+                              await complaintProvider.submitComplaint(
+                                userId: userId,
+                                userEmail: userEmail,
+                                category: _selectedCategory,
+                                description: _descriptionController.text,
+                              );
+                              _descriptionController.clear();
+                              setState(() {});
+                            }
+                          },
+                    child: complaintProvider.isLoading
+                        ? const CircularProgressIndicator()
+                        : const Text('Submit Complaint'),
+                  ),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-        ),
-        // Success Animation Overlay
-        if (_showSuccessAnimation)
-          const Positioned.fill(
-            child: SuccessAnimation(),
+          const Divider(),
+          Expanded(
+            child: StreamBuilder<List<Complaint>>(
+              stream: complaintProvider.getUserComplaints(userId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                final complaints = snapshot.data ?? [];
+
+                if (complaints.isEmpty) {
+                  return const EmptyStateWidget(
+                    message: 'No complaints yet',
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    setState(() {});
+                  },
+                  child: ListView.builder(
+                    itemCount: complaints.length,
+                    itemBuilder: (context, index) {
+                      return ComplaintCard(
+                        complaint: complaints[index],
+                        index: index,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }
