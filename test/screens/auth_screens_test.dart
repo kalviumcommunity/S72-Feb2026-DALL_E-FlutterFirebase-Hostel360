@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hostel360/screens/login_screen.dart';
 import 'package:hostel360/screens/signup_screen.dart';
-import 'package:hostel360/providers/auth_provider.dart' as app;
 
 // Mock AuthProvider for testing
 class MockAuthProvider extends ChangeNotifier {
@@ -73,12 +72,10 @@ class MockAuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  @override
   Future<String?> getUserRole(String uid) async {
     return 'student';
   }
 
-  @override
   Future<void> signOut() async {
     // Mock implementation
   }
@@ -147,7 +144,7 @@ void main() {
       expect(find.text('Invalid credentials'), findsOneWidget);
     });
 
-    testWidgets('Navigation to SignUpScreen works',
+    testWidgets('Navigation to SignupScreen works',
         (WidgetTester tester) async {
       final mockAuthProvider = MockAuthProvider();
 
@@ -164,14 +161,14 @@ void main() {
       await tester.tap(find.byKey(const Key('goToSignup')));
       await tester.pumpAndSettle();
 
-      // Verify SignUpScreen is displayed
+      // Verify SignupScreen is displayed
       expect(find.text('Create Account'), findsOneWidget);
-      expect(find.byType(SignUpScreen), findsOneWidget);
+      expect(find.byType(SignupScreen), findsOneWidget);
     });
   });
 
-  group('SignUpScreen Widget Tests', () {
-    testWidgets('SignUpScreen enables submit when form is valid',
+  group('SignupScreen Widget Tests', () {
+    testWidgets('SignupScreen enables submit when form is valid',
         (WidgetTester tester) async {
       final mockAuthProvider = MockAuthProvider();
 
@@ -179,7 +176,7 @@ void main() {
         ChangeNotifierProvider<ChangeNotifier>.value(
           value: mockAuthProvider,
           child: const MaterialApp(
-            home: SignUpScreen(),
+            home: SignupScreen(),
           ),
         ),
       );
@@ -203,7 +200,7 @@ void main() {
       expect(tester.widget<ElevatedButton>(signupButton).onPressed, isNotNull);
     });
 
-    testWidgets('SignUpScreen displays role selection',
+    testWidgets('SignupScreen displays role selection',
         (WidgetTester tester) async {
       final mockAuthProvider = MockAuthProvider();
 
@@ -211,7 +208,7 @@ void main() {
         ChangeNotifierProvider<ChangeNotifier>.value(
           value: mockAuthProvider,
           child: const MaterialApp(
-            home: SignUpScreen(),
+            home: SignupScreen(),
           ),
         ),
       );
@@ -231,7 +228,7 @@ void main() {
         ChangeNotifierProvider<ChangeNotifier>.value(
           value: mockAuthProvider,
           child: MaterialApp(
-            home: const SignUpScreen(),
+            home: const SignupScreen(),
             routes: {
               '/login': (context) => const LoginScreen(),
             },
@@ -243,8 +240,8 @@ void main() {
       await tester.tap(find.byKey(const Key('goToLogin')));
       await tester.pumpAndSettle();
 
-      // Verify we're back at login (SignUpScreen should not be visible)
-      expect(find.byType(SignUpScreen), findsNothing);
+      // Verify we're back at login (SignupScreen should not be visible)
+      expect(find.byType(SignupScreen), findsNothing);
     });
   });
 
@@ -265,7 +262,7 @@ void main() {
       // Start at LoginScreen
       expect(find.text('Welcome to Hostel360'), findsOneWidget);
 
-      // Navigate to SignUpScreen
+      // Navigate to SignupScreen
       await tester.tap(find.byKey(const Key('goToSignup')));
       await tester.pumpAndSettle();
 
