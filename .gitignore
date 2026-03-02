@@ -43,8 +43,19 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android Gradle build cache
+/android/.gradle/
+/android/.kotlin/
+/android/local.properties
+/android/captures/
+/android/app/build/
+
 # Firebase
 google-services.json
 GoogleService-Info.plist
 firebase_options.dart
 .firebase/
+
+# Node modules (if using Firebase Functions or web tools)
+node_modules/
+package-lock.json
