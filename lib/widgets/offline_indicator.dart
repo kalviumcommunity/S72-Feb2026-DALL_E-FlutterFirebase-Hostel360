@@ -32,22 +32,29 @@ class _OfflineIndicatorState extends State<OfflineIndicator> {
   Widget build(BuildContext context) {
     if (_isOnline) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.red,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.wifi_off, size: 16, color: Colors.white),
-          SizedBox(width: 4),
-          Text(
-            'Offline',
-            style: TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ],
+    return Semantics(
+      label: 'You are offline',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.error,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wifi_off,
+                size: 16, color: Theme.of(context).colorScheme.onError),
+            const SizedBox(width: 4),
+            Text(
+              'Offline',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onError,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
