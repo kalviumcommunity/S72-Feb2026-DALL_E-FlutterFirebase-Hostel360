@@ -8,20 +8,29 @@ class AuthProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore;
 
   User? _currentUser;
+  String? _userRole;
   bool _isLoading = false;
   String? _errorMessage;
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get isAuthenticated => _currentUser != null;
+  User? get user => _currentUser;
+  String? get userRole => _userRole;
 
   AuthProvider({
     AuthService? authService,
     FirebaseFirestore? firestore,
   })  : _authService = authService ?? AuthService(),
         _firestore = firestore ?? FirebaseFirestore.instance {
-    _authService.authStateChanges().listen((User? user) {
+    _authService.authStateChanges().listen((User? user) async {
       _currentUser = user;
+      if (user != null) {
+        _userRole = await getUserRole(user.uid);
+      } else {
+        _userRole = null;
+      }
       notifyListeners();
     });
   }
@@ -43,6 +52,7 @@ class AuthProvider extends ChangeNotifier {
       });
 
       _currentUser = userCredential.user;
+      _userRole = role;
       _isLoading = false;
       notifyListeners();
       return true;
@@ -67,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
 
       final userCredential = await _authService.signIn(email, password);
       _currentUser = userCredential.user;
+      _userRole = await getUserRole(userCredential.user!.uid);
       
       _isLoading = false;
       notifyListeners();
@@ -88,6 +99,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authService.signOut();
       _currentUser = null;
+      _userRole = null;
       _errorMessage = null;
       notifyListeners();
     } catch (e) {

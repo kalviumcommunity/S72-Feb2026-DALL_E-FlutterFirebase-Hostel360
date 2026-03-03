@@ -118,18 +118,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ),
           const Divider(),
           Expanded(
-            child: StreamBuilder<List<Complaint>>(
-              stream: complaintProvider.getUserComplaints(userId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            child: Consumer<ComplaintProvider>(
+              builder: (context, complaintProvider, _) {
+                complaintProvider.watchUserComplaints(userId);
+                final complaints = complaintProvider.complaints;
+
+                if (complaintProvider.isLoading && complaints.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                if (complaintProvider.errorMessage != null) {
+                  return Center(child: Text('Error: ${complaintProvider.errorMessage}'));
                 }
-
-                final complaints = snapshot.data ?? [];
 
                 if (complaints.isEmpty) {
                   return const EmptyStateWidget(

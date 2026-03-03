@@ -7,7 +7,7 @@ import '../widgets/offline_indicator.dart';
 import '../widgets/status_badge.dart';
 
 class AdminHomeScreen extends StatefulWidget {
-  const AdminHomeScreen({super.key};
+  const AdminHomeScreen({super.key});
 
   @override
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
@@ -28,18 +28,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           SizedBox(width: 16),
         ],
       ),
-      body: StreamBuilder<List<Complaint>>(
-        stream: complaintProvider.getAllComplaints(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Consumer<ComplaintProvider>(
+        builder: (context, complaintProvider, _) {
+          complaintProvider.watchAllComplaints();
+          final complaints = complaintProvider.complaints;
+
+          if (complaintProvider.isLoading && complaints.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+          if (complaintProvider.errorMessage != null) {
+            return Center(child: Text('Error: ${complaintProvider.errorMessage}'));
           }
-
-          final complaints = snapshot.data ?? [];
 
           if (complaints.isEmpty) {
             return const EmptyStateWidget(
@@ -93,7 +93,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Submitted: ${_formatDate(complaint.createdAt)}',
+                          'Submitted: ${_formatDate(complaint.timestamp)}',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey,
@@ -118,7 +118,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                     : (newStatus) async {
                                         if (newStatus != null) {
                                           await complaintProvider
-                                              .updateComplaintStatus(
+                                              .updateStatus(
                                             complaint.id,
                                             newStatus,
                                           );

@@ -229,8 +229,12 @@ class _SignupScreenState extends State<SignupScreen>
                               padding: const EdgeInsets.all(12),
                               margin: const EdgeInsets.only(bottom: 16),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.errorContainer,
+                                color: theme.colorScheme.error.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: theme.colorScheme.error.withOpacity(0.3),
+                                  width: 1,
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -242,8 +246,9 @@ class _SignupScreenState extends State<SignupScreen>
                                   Expanded(
                                     child: Text(
                                       authProvider.errorMessage!,
-                                      style: TextStyle(
+                                      style: theme.textTheme.bodyMedium?.copyWith(
                                         color: theme.colorScheme.error,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
@@ -328,6 +333,8 @@ class _RoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -335,7 +342,9 @@ class _RoleCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.primaryContainer
+              ? (isDark 
+                  ? theme.colorScheme.primary.withOpacity(0.15)
+                  : theme.colorScheme.primary.withOpacity(0.1))
               : theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
