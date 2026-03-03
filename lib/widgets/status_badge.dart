@@ -40,16 +40,26 @@ class _StatusBadgeState extends State<StatusBadge>
     super.dispose();
   }
 
-  Color _getStatusColor() {
+  Color _getStatusColor(BuildContext context) {
     switch (widget.status) {
       case 'Pending':
-        return Colors.orange;
+        return Colors.orange.shade600;
       case 'In Progress':
-        return Colors.blue;
+        return Theme.of(context).colorScheme.primary;
       case 'Resolved':
-        return Colors.green;
+        return Colors.green.shade600;
       default:
-        return Colors.grey;
+        return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+    }
+  }
+
+  Color _getStatusTextColor(BuildContext context) {
+    switch (widget.status) {
+      case 'Resolved':
+      case 'Pending':
+        return Colors.white;
+      default:
+        return Theme.of(context).colorScheme.onPrimary;
     }
   }
 
@@ -61,13 +71,13 @@ class _StatusBadgeState extends State<StatusBadge>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: _getStatusColor(),
+          color: _getStatusColor(context),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           widget.status,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: _getStatusTextColor(context),
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

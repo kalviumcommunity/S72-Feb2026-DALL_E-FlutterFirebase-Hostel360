@@ -20,14 +20,14 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Email'),
-            subtitle: Text(authProvider.user?.email ?? ''),
+            subtitle: Text(authProvider.currentUser?.email ?? ''),
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.dark_mode),
             title: const Text('Dark Mode'),
             trailing: Switch(
-              value: themeProvider.themeMode == ThemeMode.dark,
+              value: themeProvider.isDarkMode,
               onChanged: (_) => themeProvider.toggleTheme(),
             ),
           ),
@@ -39,8 +39,12 @@ class SettingsScreen extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
+            leading: Icon(Icons.logout,
+                color: Theme.of(context).colorScheme.error),
+            title: Text(
+              'Logout',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
             onTap: () async {
               final shouldLogout = await showDialog<bool>(
                 context: context,
@@ -62,6 +66,10 @@ class SettingsScreen extends StatelessWidget {
 
               if (shouldLogout == true && context.mounted) {
                 await authProvider.signOut();
+                // Pop back to allow AppRouter to redirect to login
+                if (context.mounted) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
               }
             },
           ),
