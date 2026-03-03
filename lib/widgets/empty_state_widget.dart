@@ -56,15 +56,17 @@ class _EmptyStateWidgetState extends State<EmptyStateWidget>
               Icon(
                 Icons.inbox_outlined,
                 size: 64,
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 widget.message,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.5),
+                    ),
               ),
             ],
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../screens/login_screen.dart';
+import '../screens/landing_screen.dart';
 import '../screens/student_home_screen.dart';
 import '../screens/admin_home_screen.dart';
 
@@ -12,21 +12,31 @@ class AppRouter extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
-        if (!authProvider.isAuthenticated) {
-          return const LoginScreen();
+        // Check if user is authenticated
+        if (authProvider.currentUser == null) {
+          return const LandingScreen();
         }
 
-        if (authProvider.userRole == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+        // User is authenticated, fetch role and route accordingly
+        return FutureBuilder<String?>(
+          future: authProvider.getUserRole(authProvider.currentUser!.uid),
+          builder: (context, snapshot) {
+            // Show loading while fetching role
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
 
-        if (authProvider.userRole == 'admin') {
-          return const AdminHomeScreen();
-        }
+            // Check if role is admin
+            if (snapshot.data == 'admin') {
+              return const AdminHomeScreen();
+            }
 
-        return const StudentHomeScreen();
+            // Default to student home screen
+            return const StudentHomeScreen();
+          },
+        );
       },
     );
   }

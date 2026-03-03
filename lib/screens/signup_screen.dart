@@ -360,7 +360,7 @@ class _RoleCard extends StatelessWidget {
               icon,
               size: 40,
               color: isSelected
-                  ? theme.colorScheme.primary
+                  ? theme.colorScheme.onPrimaryContainer
                   : theme.colorScheme.onSurface.withOpacity(0.6),
             ),
             const SizedBox(height: 8),
@@ -369,7 +369,7 @@ class _RoleCard extends StatelessWidget {
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: isSelected
-                    ? theme.colorScheme.primary
+                    ? theme.colorScheme.onPrimaryContainer
                     : theme.colorScheme.onSurface,
               ),
             ),

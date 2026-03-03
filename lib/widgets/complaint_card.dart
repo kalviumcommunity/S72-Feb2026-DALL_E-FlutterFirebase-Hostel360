@@ -5,11 +5,17 @@ import 'status_badge.dart';
 class ComplaintCard extends StatefulWidget {
   final Complaint complaint;
   final int index;
+  final bool showActions;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const ComplaintCard({
     super.key,
     required this.complaint,
     this.index = 0,
+    this.showActions = false,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -65,11 +71,13 @@ class _ComplaintCardState extends State<ComplaintCard>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      widget.complaint.category,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                    Expanded(
+                      child: Text(
+                        widget.complaint.category,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
                     ),
                     StatusBadge(status: widget.complaint.status),
                   ],
@@ -78,13 +86,46 @@ class _ComplaintCardState extends State<ComplaintCard>
                 Text(
                   widget.complaint.description,
                   style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Submitted: ${_formatDate(widget.complaint.timestamp)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Submitted: ${_formatDate(widget.complaint.timestamp)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
                       ),
+                    ),
+                    if (widget.showActions && (widget.onEdit != null || widget.onDelete != null))
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.onEdit != null)
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 20),
+                              onPressed: widget.onEdit,
+                              tooltip: 'Edit',
+                            ),
+                          if (widget.onDelete != null)
+                            IconButton(
+                              icon: Icon(Icons.delete,
+                                  size: 20,
+                                  color:
+                                      Theme.of(context).colorScheme.error),
+                              onPressed: widget.onDelete,
+                              tooltip: 'Delete',
+                            ),
+                        ],
+                      ),
+                  ],
                 ),
               ],
             ),
