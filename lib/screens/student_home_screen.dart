@@ -186,43 +186,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ),
           const Divider(),
           Expanded(
-<<<<<<< HEAD
-            child: Consumer<ComplaintProvider>(
-              builder: (context, complaintProvider, _) {
-                complaintProvider.watchUserComplaints(userId);
-                final complaints = complaintProvider.complaints;
-
-                if (complaintProvider.isLoading && complaints.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (complaintProvider.errorMessage != null) {
-                  return Center(child: Text('Error: ${complaintProvider.errorMessage}'));
-                }
-
-                if (complaints.isEmpty) {
-                  return const EmptyStateWidget(
-                    message: 'No complaints yet',
-                  );
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    setState(() {});
-                  },
-                  child: ListView.builder(
-                    itemCount: complaints.length,
-                    itemBuilder: (context, index) {
-                      return ComplaintCard(
-                        complaint: complaints[index],
-                        index: index,
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-=======
             child: complaintProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : complaintProvider.errorMessage != null
@@ -253,7 +216,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               },
                             ),
                           ),
->>>>>>> ed1eca950d0a94440eefedb5ec814c0d20d264df
           ),
         ],
       ),

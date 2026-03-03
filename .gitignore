@@ -55,6 +55,7 @@ google-services.json
 GoogleService-Info.plist
 firebase_options.dart
 .firebase/
+.gradle/
 
 # Node modules (if using Firebase Functions or web tools)
 node_modules/

@@ -66,119 +66,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           const SizedBox(width: 8),
         ],
       ),
-<<<<<<< HEAD
-      body: Consumer<ComplaintProvider>(
-        builder: (context, complaintProvider, _) {
-          complaintProvider.watchAllComplaints();
-          final complaints = complaintProvider.complaints;
-
-          if (complaintProvider.isLoading && complaints.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (complaintProvider.errorMessage != null) {
-            return Center(child: Text('Error: ${complaintProvider.errorMessage}'));
-          }
-
-          if (complaints.isEmpty) {
-            return const EmptyStateWidget(
-              message: 'No complaints found',
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {});
-            },
-            child: ListView.builder(
-              itemCount: complaints.length,
-              itemBuilder: (context, index) {
-                final complaint = complaints[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              complaint.category,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            StatusBadge(status: complaint.status),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'User: ${complaint.userEmail}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[700],
-                                  ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          complaint.description,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Submitted: ${_formatDate(complaint.timestamp)}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey,
-                                  ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Text('Status: '),
-                            Expanded(
-                              child: DropdownButton<String>(
-                                value: complaint.status,
-                                isExpanded: true,
-                                items: _statuses.map((status) {
-                                  return DropdownMenuItem(
-                                    value: status,
-                                    child: Text(status),
-                                  );
-                                }).toList(),
-                                onChanged: complaintProvider.isLoading
-                                    ? null
-                                    : (newStatus) async {
-                                        if (newStatus != null) {
-                                          await complaintProvider
-                                              .updateStatus(
-                                            complaint.id,
-                                            newStatus,
-                                          );
-                                        }
-                                      },
-                              ),
-                            ),
-                            if (complaintProvider.isLoading)
-                              const Padding(
-                                padding: EdgeInsets.only(left: 8),
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-=======
       body: Column(
         children: [
           // Search and Filter Bar
@@ -340,7 +227,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       resolutionRate > 70
                           ? Theme.of(context).colorScheme.primary
                           : Theme.of(context).colorScheme.error,
->>>>>>> ed1eca950d0a94440eefedb5ec814c0d20d264df
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -556,6 +442,36 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         },
       ),
     );
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'maintenance':
+        return Colors.blue;
+      case 'cleanliness':
+        return Colors.green;
+      case 'food':
+        return Colors.orange;
+      case 'security':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'urgent':
+        return const Color(0xFFEF4444);
+      case 'high':
+        return const Color(0xFFF97316);
+      case 'medium':
+        return const Color(0xFFF59E0B);
+      case 'low':
+        return const Color(0xFF10B981);
+      default:
+        return const Color(0xFF6B7280);
+    }
   }
 
   Color _getCategoryColor(String category) {
