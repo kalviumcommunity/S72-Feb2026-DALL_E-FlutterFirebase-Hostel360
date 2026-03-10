@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart'; // For kIsWeb
+import 'dart:io' show File; // Only import File explicitly to avoid Platform conflicts if used later
+import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import '../providers/complaint_provider.dart';
 import '../models/complaint.dart';
@@ -35,6 +38,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     'High',
     'Urgent',
   ];
+  bool _isAnonymous = false;
+  XFile? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -146,6 +161,105 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 16),
+                  
+                  // Image Attachment Section
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.attach_file),
+                        label: Text(_selectedImage == null ? 'Attach Evidence' : 'Change Evidence'),
+                      ),
+                      if (_selectedImage != null) ...[
+                        const SizedBox(width: 8),
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                image: DecorationImage(
+                                  image: kIsWeb
+                                      ? NetworkImage(_selectedImage!.path) as ImageProvider
+                                      : FileImage(File(_selectedImage!.path)),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: -8,
+                              right: -8,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _selectedImage = null),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.error,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Anonymous toggle
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _isAnonymous
+                          ? Theme.of(context).colorScheme.errorContainer.withOpacity(0.3)
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _isAnonymous
+                            ? Theme.of(context).colorScheme.error.withOpacity(0.3)
+                            : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.shield_rounded,
+                          size: 20,
+                          color: _isAnonymous
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'File Anonymously',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                'Your identity will be hidden from admin',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _isAnonymous,
+                          onChanged: (val) => setState(() => _isAnonymous = val),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   CustomButton(
                     text: 'Submit Complaint',
                     isLoading: complaintProvider.isLoading,
@@ -160,12 +274,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                 category: _selectedCategory,
                                 description: _descriptionController.text,
                                 priority: _selectedPriority,
+                                isAnonymous: _isAnonymous,
+                                imageFile: _selectedImage,
                               );
                               if (context.mounted) {
                                 _descriptionController.clear();
                                 setState(() {
                                   _selectedCategory = 'Maintenance';
                                   _selectedPriority = 'Medium';
+                                  _isAnonymous = false;
+                                  _selectedImage = null;
                                 });
                                 if (complaintProvider.errorMessage == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(

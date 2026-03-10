@@ -74,6 +74,7 @@ class Complaint {
   final List<StatusTimestamp> statusHistory;
   final List<String> upvotedBy; // List of user IDs who upvoted
   final int upvoteCount;
+  final bool isAnonymous;
 
   Complaint({
     required this.id,
@@ -89,6 +90,7 @@ class Complaint {
     this.statusHistory = const [],
     this.upvotedBy = const [],
     this.upvoteCount = 0,
+    this.isAnonymous = false,
   });
 
   // Helper to get the most recent status change time
@@ -129,6 +131,7 @@ class Complaint {
       'statusHistory': statusHistory.map((sh) => sh.toJson()).toList(),
       'upvotedBy': upvotedBy,
       'upvoteCount': upvoteCount,
+      'isAnonymous': isAnonymous,
     };
   }
 
@@ -159,6 +162,7 @@ class Complaint {
               .toList() ??
           [],
       upvoteCount: json['upvoteCount'] as int? ?? 0,
+      isAnonymous: json['isAnonymous'] as bool? ?? false,
     );
   }
 
@@ -177,6 +181,7 @@ class Complaint {
     List<StatusTimestamp>? statusHistory,
     List<String>? upvotedBy,
     int? upvoteCount,
+    bool? isAnonymous,
   }) {
     return Complaint(
       id: id ?? this.id,
@@ -192,6 +197,7 @@ class Complaint {
       statusHistory: statusHistory ?? this.statusHistory,
       upvotedBy: upvotedBy ?? this.upvotedBy,
       upvoteCount: upvoteCount ?? this.upvoteCount,
+      isAnonymous: isAnonymous ?? this.isAnonymous,
     );
   }
 }

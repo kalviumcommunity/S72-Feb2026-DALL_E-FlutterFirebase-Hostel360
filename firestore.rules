@@ -45,15 +45,37 @@ service cloud.firestore {
       
       // Students can update their own pending complaints
       // Admins can update any complaint
+      // Any authenticated user can upvote (only upvotedBy and upvoteCount fields)
       allow update: if isAdmin() || 
                       (isOwner(resource.data.userId) && 
-                       resource.data.status == 'Pending');
+                       resource.data.status == 'Pending') ||
+                      (isAuthenticated() &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['upvotedBy', 'upvoteCount']));
       
       // Students can delete their own pending complaints
       // Admins can delete any complaint
       allow delete: if isAdmin() || 
                       (isOwner(resource.data.userId) && 
                        resource.data.status == 'Pending');
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && 
+                    resource.data.userId == request.auth.uid;
+      
+      // Admins can create notifications for any user
+      allow create: if isAdmin();
+      
+      // Users can update their own notifications (e.g. mark as read)
+      allow update: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && 
+                      resource.data.userId == request.auth.uid;
     }
   }
 }

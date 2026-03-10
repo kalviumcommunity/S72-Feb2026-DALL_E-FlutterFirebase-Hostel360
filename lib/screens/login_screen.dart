@@ -72,10 +72,14 @@ class _LoginScreenState extends State<LoginScreen>
     if (!_isFormValid) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.signIn(
+    final success = await authProvider.signIn(
       _emailController.text.trim(),
       _passwordController.text,
     );
+
+    if (success && mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   @override

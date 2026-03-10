@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cross_file/cross_file.dart';
 import '../models/complaint.dart';
 
 class ComplaintService {
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   ComplaintService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -26,6 +29,18 @@ class ComplaintService {
     } catch (e) {
       throw Exception('Failed to create complaint: $e');
     }
+  }
+
+  Future<String> uploadImage(XFile imageFile, String complaintId) async {
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.name}';
+    final ref = _storage.ref().child('complaints/$complaintId/$fileName');
+    
+    final metadata = SettableMetadata(contentType: imageFile.mimeType ?? 'image/jpeg');
+    
+    // Use readAsBytes() and putData() to support both Web and Mobile
+    final bytes = await imageFile.readAsBytes();
+    final uploadTask = await ref.putData(bytes, metadata);
+    return await uploadTask.ref.getDownloadURL();
   }
 
   Stream<List<Complaint>> getComplaintsByUser(String userId) {
