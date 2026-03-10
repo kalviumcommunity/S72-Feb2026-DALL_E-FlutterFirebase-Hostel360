@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/complaint_provider.dart';
 import '../models/complaint.dart';
+import '../services/complaint_service.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/offline_indicator.dart';
 import '../widgets/status_badge.dart';
@@ -15,19 +17,55 @@ class AllComplaintsScreen extends StatefulWidget {
 }
 
 class _AllComplaintsScreenState extends State<AllComplaintsScreen> {
+  final ComplaintService _complaintService = ComplaintService();
+  StreamSubscription<List<Complaint>>? _subscription;
+  List<Complaint> _allComplaints = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final complaintProvider = Provider.of<ComplaintProvider>(context, listen: false);
-      complaintProvider.watchAllComplaints();
+    _watchAllComplaints();
+  }
+
+  void _watchAllComplaints() {
+    _subscription?.cancel();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    _subscription = _complaintService.getAllComplaints().listen(
+      (complaints) {
+        if (mounted) {
+          setState(() {
+            _allComplaints = complaints;
+            _isLoading = false;
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = error.toString();
+            _isLoading = false;
+          });
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final complaintProvider = Provider.of<ComplaintProvider>(context);
+    final complaintProvider = Provider.of<ComplaintProvider>(context, listen: false);
     final currentUserId = authProvider.user?.uid ?? '';
 
     return Scaffold(
@@ -38,25 +76,25 @@ class _AllComplaintsScreenState extends State<AllComplaintsScreen> {
           SizedBox(width: 16),
         ],
       ),
-      body: complaintProvider.isLoading && complaintProvider.complaints.isEmpty
+      body: _isLoading && _allComplaints.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : complaintProvider.errorMessage != null
+          : _errorMessage != null
               ? Center(
-                  child: Text('Error: ${complaintProvider.errorMessage}'),
+                  child: Text('Error: $_errorMessage'),
                 )
-              : complaintProvider.complaints.isEmpty
+              : _allComplaints.isEmpty
                   ? const EmptyStateWidget(
                       message: 'No complaints found',
                     )
                   : RefreshIndicator(
                       onRefresh: () async {
-                        complaintProvider.watchAllComplaints();
+                        _watchAllComplaints();
                       },
                       child: ListView.builder(
-                        itemCount: complaintProvider.complaints.length,
+                        itemCount: _allComplaints.length,
                         padding: const EdgeInsets.all(16),
                         itemBuilder: (context, index) {
-                          final complaint = complaintProvider.complaints[index];
+                          final complaint = _allComplaints[index];
                           final hasUpvoted = complaint.upvotedBy.contains(currentUserId);
                           final isOwnComplaint = complaint.userId == currentUserId;
 
@@ -81,7 +119,10 @@ class _AllComplaintsScreenState extends State<AllComplaintsScreen> {
                                               ),
                                         ),
                                       ),
-                                      StatusBadge(status: complaint.status),
+                                      StatusBadge(
+                                        status: complaint.status,
+                                        priority: complaint.priority,
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 8),

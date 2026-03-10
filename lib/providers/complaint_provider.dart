@@ -1,5 +1,6 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'package:cross_file/cross_file.dart';
 import '../models/complaint.dart';
 import '../services/complaint_service.dart';
 
@@ -32,13 +33,15 @@ class ComplaintProvider with ChangeNotifier {
   String? get filterPriority => _filterPriority;
   String get sortBy => _sortBy;
 
+  // Submit a new complaint
   Future<bool> submitComplaint({
     required String category,
     required String description,
     required String userId,
     required String userEmail,
     String priority = 'Medium',
-    List<String> imageUrls = const [],
+    XFile? imageFile,
+    bool isAnonymous = false,
   }) async {
     final now = DateTime.now();
     if (_lastSubmissionTime != null &&
@@ -53,6 +56,11 @@ class ComplaintProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // First create a temporary complaint object to get an ID if we need to upload an image.
+      // We will actually just let the service create it and get the ID. But Firebase storage needs an ID.
+      // So we'll let service create it, and then update it with the imageURL if there's an image.
+      // Alternatively, we can let the service handle it.
+      
       final complaint = Complaint(
         id: '',
         userId: userId,
@@ -62,10 +70,20 @@ class ComplaintProvider with ChangeNotifier {
         status: 'Pending',
         priority: priority,
         timestamp: DateTime.now(),
-        imageUrls: imageUrls,
+        imageUrls: [],
+        isAnonymous: isAnonymous,
       );
 
-      await _complaintService.createComplaint(complaint);
+      final docId = await _complaintService.createComplaint(complaint);
+
+      if (imageFile != null) {
+        final imageUrl = await _complaintService.uploadImage(imageFile, docId);
+        await _complaintService.updateComplaint(
+          complaintId: docId,
+          userId: userId,
+          imageUrls: [imageUrl],
+        );
+      }
       _lastSubmissionTime = now;
       _isLoading = false;
       notifyListeners();

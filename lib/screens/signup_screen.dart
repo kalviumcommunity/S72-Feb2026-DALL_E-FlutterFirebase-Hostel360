@@ -263,11 +263,14 @@ class _SignupScreenState extends State<SignupScreen>
                                 ? null
                                 : () async {
                                     if (_formKey.currentState!.validate()) {
-                                      await authProvider.signUp(
+                                      final success = await authProvider.signUp(
                                         _emailController.text.trim(),
                                         _passwordController.text,
                                         _selectedRole,
                                       );
+                                      if (success && mounted) {
+                                        Navigator.of(context).popUntil((route) => route.isFirst);
+                                      }
                                     }
                                   },
                             isLoading: authProvider.isLoading,

@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/complaint_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/app_notification_provider.dart';
 import 'widgets/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ComplaintProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AppNotificationProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

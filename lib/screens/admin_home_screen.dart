@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/complaint_provider.dart';
+import '../providers/app_notification_provider.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/offline_indicator.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/admin_reply_dialog.dart';
 import 'settings_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
@@ -153,6 +156,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final categoryStats = provider.getCategoryStats();
     final priorityStats = provider.getPriorityStats();
     final resolutionRate = provider.getResolutionRate();
+    final total = provider.complaints.length;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -167,7 +171,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               Expanded(
                 child: _MetricCard(
                   title: 'Total',
-                  value: provider.complaints.length.toString(),
+                  value: total.toString(),
                   icon: Icons.assignment,
                   color: Colors.blue,
                 ),
@@ -206,6 +210,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             ],
           ),
           const SizedBox(height: 24),
+
           // Resolution Rate
           Card(
             child: Padding(
@@ -240,64 +245,308 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Category Distribution
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Complaints by Category',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...categoryStats.entries.map((entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _StatBar(
-                          label: entry.key,
-                          value: entry.value,
-                          total: provider.complaints.length,
-                          color: _getCategoryColor(entry.key),
-                        ),
-                      )),
-                ],
+
+          // Status Pie Chart
+          if (total > 0)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complaints by Status',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 200,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: PieChart(
+                              PieChartData(
+                                sectionsSpace: 3,
+                                centerSpaceRadius: 40,
+                                sections: _buildStatusSections(statusStats, total),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: statusStats.entries.map((entry) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(entry.key),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${entry.key} (${entry.value})',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 16),
-          // Priority Distribution
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Complaints by Priority',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+
+          // Category Bar Chart
+          if (total > 0)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complaints by Category',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 200,
+                      child: BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: (categoryStats.values.isEmpty
+                                  ? 1
+                                  : categoryStats.values
+                                      .reduce((a, b) => a > b ? a : b))
+                              .toDouble() *
+                              1.3,
+                          barTouchData: BarTouchData(
+                            touchTooltipData: BarTouchTooltipData(
+                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                final keys = categoryStats.keys.toList();
+                                return BarTooltipItem(
+                                  '${keys[group.x]}\n${rod.toY.toInt()}',
+                                  TextStyle(
+                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 30,
+                                getTitlesWidget: (value, meta) {
+                                  if (value == value.toInt().toDouble()) {
+                                    return Text(
+                                      value.toInt().toString(),
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 36,
+                                getTitlesWidget: (value, meta) {
+                                  final keys = categoryStats.keys.toList();
+                                  if (value.toInt() < keys.length) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Text(
+                                        keys[value.toInt()].length > 6
+                                            ? '${keys[value.toInt()].substring(0, 6)}.'
+                                            : keys[value.toInt()],
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              fontSize: 10,
+                                            ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ),
+                          ),
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                            horizontalInterval: 1,
+                            getDrawingHorizontalLine: (value) => FlLine(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                              strokeWidth: 1,
+                            ),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          barGroups: _buildCategoryBarGroups(categoryStats),
                         ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...priorityStats.entries.map((entry) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _StatBar(
-                          label: entry.key,
-                          value: entry.value,
-                          total: provider.complaints.length,
-                          color: _getPriorityColor(entry.key),
-                        ),
-                      )),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          const SizedBox(height: 16),
+
+          // Priority Pie Chart
+          if (total > 0)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complaints by Priority',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 200,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: PieChart(
+                              PieChartData(
+                                sectionsSpace: 3,
+                                centerSpaceRadius: 40,
+                                sections: _buildPrioritySections(priorityStats, total),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: priorityStats.entries.map((entry) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: _getPriorityColor(entry.key),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${entry.key} (${entry.value})',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
+  }
+
+  List<PieChartSectionData> _buildStatusSections(Map<String, int> stats, int total) {
+    return stats.entries.map((entry) {
+      final percentage = (entry.value / total) * 100;
+      return PieChartSectionData(
+        color: _getStatusColor(entry.key),
+        value: entry.value.toDouble(),
+        title: '${percentage.toStringAsFixed(0)}%',
+        radius: 50,
+        titleStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
+  }
+
+  List<PieChartSectionData> _buildPrioritySections(Map<String, int> stats, int total) {
+    return stats.entries.map((entry) {
+      final percentage = (entry.value / total) * 100;
+      return PieChartSectionData(
+        color: _getPriorityColor(entry.key),
+        value: entry.value.toDouble(),
+        title: '${percentage.toStringAsFixed(0)}%',
+        radius: 50,
+        titleStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      );
+    }).toList();
+  }
+
+  List<BarChartGroupData> _buildCategoryBarGroups(Map<String, int> stats) {
+    return stats.entries.toList().asMap().entries.map((entry) {
+      return BarChartGroupData(
+        x: entry.key,
+        barRods: [
+          BarChartRodData(
+            toY: entry.value.value.toDouble(),
+            color: _getCategoryColor(entry.value.key),
+            width: 22,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(6),
+              topRight: Radius.circular(6),
+            ),
+          ),
+        ],
+      );
+    }).toList();
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'in progress':
+        return Colors.amber.shade700;
+      case 'resolved':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildComplaintsList(ComplaintProvider complaintProvider) {
@@ -339,7 +588,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               ),
                         ),
                       ),
-                      StatusBadge(status: complaint.status),
+                      StatusBadge(
+                        status: complaint.status,
+                        priority: complaint.priority,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -364,7 +616,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'User: ${complaint.userEmail}',
+                    'User: ${complaint.isAnonymous ? 'Anonymous Student' : complaint.userEmail}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context)
                               .colorScheme
@@ -372,6 +624,24 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               .withValues(alpha: 0.6),
                         ),
                   ),
+                  if (complaint.isAnonymous)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.shield_rounded, size: 14, color: Theme.of(context).colorScheme.error),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Anonymous Complaint',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   const SizedBox(height: 8),
                   Text(
                     complaint.description,
@@ -379,6 +649,74 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (complaint.imageUrls.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Evidence Attached:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: complaint.imageUrls.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => Dialog(
+                                    backgroundColor: Colors.transparent,
+                                    insetPadding: EdgeInsets.zero,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        InteractiveViewer(
+                                          child: Image.network(
+                                            complaint.imageUrls[index],
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 16,
+                                          right: 16,
+                                          child: IconButton(
+                                            icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                            onPressed: () => Navigator.of(context).pop(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  complaint.imageUrls[index],
+                                  height: 100,
+                                  width: 100,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    height: 100,
+                                    width: 100,
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                    child: const Icon(Icons.error),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -425,11 +763,23 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                               ? null
                               : (newStatus) async {
                                   if (newStatus != null) {
+                                    final oldStatus = complaint.status;
                                     await complaintProvider.updateStatus(
                                       complaint.id,
                                       newStatus,
                                     );
                                     if (context.mounted) {
+                                      // Send status change notification to student
+                                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                                      final notifProvider = Provider.of<AppNotificationProvider>(context, listen: false);
+                                      await notifProvider.sendStatusChangeNotification(
+                                        studentUserId: complaint.userId,
+                                        complaintId: complaint.id,
+                                        complaintCategory: complaint.category,
+                                        oldStatus: oldStatus,
+                                        newStatus: newStatus,
+                                        adminEmail: authProvider.currentUser?.email ?? 'Admin',
+                                      );
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                           content: Text(
@@ -451,6 +801,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
+                        ),
+                      if (!complaint.isAnonymous)
+                        IconButton(
+                          icon: Icon(
+                            Icons.reply_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          onPressed: () => _showReplyDialog(context, complaint),
+                          tooltip: 'Reply to Student',
                         ),
                       IconButton(
                         icon: Icon(
@@ -503,6 +862,49 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showReplyDialog(BuildContext context, dynamic complaint) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final notifProvider = Provider.of<AppNotificationProvider>(context, listen: false);
+    final complaintProvider = Provider.of<ComplaintProvider>(context, listen: false);
+    final adminEmail = authProvider.currentUser?.email ?? 'Admin';
+    final adminId = authProvider.currentUser?.uid ?? '';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AdminReplyDialog(
+        complaintCategory: complaint.category,
+        studentEmail: complaint.userEmail,
+        onSend: (message) async {
+          // 1. Add as a note on the complaint
+          await complaintProvider.addNote(
+            complaintId: complaint.id,
+            text: message,
+            authorId: adminId,
+            authorEmail: adminEmail,
+            isAdminNote: true,
+          );
+          // 2. Send notification to the student
+          return await notifProvider.sendReplyNotification(
+            studentUserId: complaint.userId,
+            complaintId: complaint.id,
+            complaintCategory: complaint.category,
+            replyMessage: message,
+            adminEmail: adminEmail,
+          );
+        },
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Reply sent successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   void _showDeleteDialog(BuildContext context, String complaintId, ComplaintProvider complaintProvider) async {
@@ -559,12 +961,35 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
-        label: Text(label),
+        label: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface.withOpacity(0.8),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
         selected: isSelected,
         onSelected: (_) => onTap(),
+        showCheckmark: false,
+        backgroundColor: theme.colorScheme.surface,
+        selectedColor: theme.colorScheme.primary,
+        side: BorderSide(
+          color: isSelected
+              ? Colors.transparent
+              : theme.colorScheme.outline.withOpacity(0.25),
+          width: 1,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       ),
     );
   }

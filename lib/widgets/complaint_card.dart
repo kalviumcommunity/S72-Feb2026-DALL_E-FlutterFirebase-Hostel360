@@ -79,7 +79,10 @@ class _ComplaintCardState extends State<ComplaintCard>
                             ),
                       ),
                     ),
-                    StatusBadge(status: widget.complaint.status),
+                    StatusBadge(
+                      status: widget.complaint.status,
+                      priority: widget.complaint.priority,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -89,6 +92,67 @@ class _ComplaintCardState extends State<ComplaintCard>
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (widget.complaint.imageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 80,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: widget.complaint.imageUrls.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => Dialog(
+                                  backgroundColor: Colors.transparent,
+                                  insetPadding: EdgeInsets.zero,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      InteractiveViewer(
+                                        child: Image.network(
+                                          widget.complaint.imageUrls[index],
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 16,
+                                        right: 16,
+                                        child: IconButton(
+                                          icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                          onPressed: () => Navigator.of(context).pop(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                widget.complaint.imageUrls[index],
+                                height: 80,
+                                width: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  height: 80,
+                                  width: 80,
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  child: const Icon(Icons.error),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
