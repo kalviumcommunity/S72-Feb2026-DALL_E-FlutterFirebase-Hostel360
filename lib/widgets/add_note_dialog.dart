@@ -164,7 +164,7 @@ class _AddNoteDialogState extends State<AddNoteDialog> {
                       onChanged: _isSubmitting
                           ? null
                           : (value) => setState(() => _isAdminNote = value),
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                     ),
                   ],
                 ),

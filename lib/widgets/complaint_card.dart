@@ -113,6 +113,8 @@ class _ComplaintCardState extends State<ComplaintCard>
                               icon: const Icon(Icons.edit, size: 20),
                               onPressed: widget.onEdit,
                               tooltip: 'Edit',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           if (widget.onDelete != null)
                             IconButton(
@@ -122,6 +124,8 @@ class _ComplaintCardState extends State<ComplaintCard>
                                       Theme.of(context).colorScheme.error),
                               onPressed: widget.onDelete,
                               tooltip: 'Delete',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                         ],
                       ),

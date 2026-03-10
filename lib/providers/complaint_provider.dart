@@ -80,6 +80,7 @@ class ComplaintProvider with ChangeNotifier {
 
   Future<bool> updateComplaint({
     required String complaintId,
+    required String userId,
     String? category,
     String? description,
     String? priority,
@@ -92,6 +93,7 @@ class ComplaintProvider with ChangeNotifier {
     try {
       await _complaintService.updateComplaint(
         complaintId: complaintId,
+        userId: userId,
         category: category,
         description: description,
         priority: priority,
@@ -108,13 +110,13 @@ class ComplaintProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> deleteComplaint(String complaintId) async {
+  Future<bool> deleteComplaint(String complaintId, String userId, {bool isAdmin = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _complaintService.deleteComplaint(complaintId);
+      await _complaintService.deleteComplaint(complaintId, userId, isAdmin: isAdmin);
       _isLoading = false;
       notifyListeners();
       return true;
@@ -361,6 +363,17 @@ class ComplaintProvider with ChangeNotifier {
     final resolved =
         _complaints.where((c) => c.status.toLowerCase() == 'resolved').length;
     return (resolved / _complaints.length) * 100;
+  }
+
+  Future<bool> toggleUpvote(String complaintId, String userId) async {
+    try {
+      await _complaintService.toggleUpvote(complaintId, userId);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
   @override

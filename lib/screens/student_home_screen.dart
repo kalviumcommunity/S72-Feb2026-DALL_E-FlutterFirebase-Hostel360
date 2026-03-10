@@ -90,7 +90,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               child: Column(
                 children: [
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(
                       labelText: 'Category',
                       border: OutlineInputBorder(),
@@ -109,7 +109,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _selectedPriority,
+                    initialValue: _selectedPriority,
                     decoration: const InputDecoration(
                       labelText: 'Priority',
                       border: OutlineInputBorder(),
@@ -202,16 +202,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               itemCount: complaintProvider.complaints.length,
                               itemBuilder: (context, index) {
                                 final complaint = complaintProvider.complaints[index];
+                                final canEdit = complaint.canEdit;
+                                final canDelete = complaint.canDelete;
+                                final showActions = canEdit || canDelete;
+                                
                                 return ComplaintCard(
                                   complaint: complaint,
                                   index: index,
-                                  showActions: true,
-                                  onEdit: complaint.canEdit
-                                      ? () => _showEditDialog(context, complaint)
-                                      : null,
-                                  onDelete: complaint.canDelete
-                                      ? () => _showDeleteDialog(context, complaint.id)
-                                      : null,
+                                  showActions: showActions,
+                                  onEdit: canEdit ? () => _showEditDialog(context, complaint) : null,
+                                  onDelete: canDelete ? () => _showDeleteDialog(context, complaint.id) : null,
                                 );
                               },
                             ),
@@ -230,8 +230,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       builder: (context) => EditComplaintDialog(
         complaint: complaint,
         onUpdate: (category, description, priority) async {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final userId = authProvider.user!.uid;
           return await complaintProvider.updateComplaint(
             complaintId: complaint.id,
+            userId: userId,
             category: category,
             description: description,
             priority: priority,
@@ -274,7 +277,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
     if (shouldDelete == true && context.mounted) {
       final complaintProvider = Provider.of<ComplaintProvider>(context, listen: false);
-      final success = await complaintProvider.deleteComplaint(complaintId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user!.uid;
+      final success = await complaintProvider.deleteComplaint(complaintId, userId);
       
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

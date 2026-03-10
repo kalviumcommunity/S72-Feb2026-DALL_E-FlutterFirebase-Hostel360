@@ -72,6 +72,8 @@ class Complaint {
   final List<String> imageUrls;
   final List<ComplaintNote> notes;
   final List<StatusTimestamp> statusHistory;
+  final List<String> upvotedBy; // List of user IDs who upvoted
+  final int upvoteCount;
 
   Complaint({
     required this.id,
@@ -85,6 +87,8 @@ class Complaint {
     this.imageUrls = const [],
     this.notes = const [],
     this.statusHistory = const [],
+    this.upvotedBy = const [],
+    this.upvoteCount = 0,
   });
 
   // Helper to get the most recent status change time
@@ -123,6 +127,8 @@ class Complaint {
       'imageUrls': imageUrls,
       'notes': notes.map((note) => note.toJson()).toList(),
       'statusHistory': statusHistory.map((sh) => sh.toJson()).toList(),
+      'upvotedBy': upvotedBy,
+      'upvoteCount': upvoteCount,
     };
   }
 
@@ -148,6 +154,11 @@ class Complaint {
               ?.map((e) => StatusTimestamp.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      upvotedBy: (json['upvotedBy'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      upvoteCount: json['upvoteCount'] as int? ?? 0,
     );
   }
 
@@ -164,6 +175,8 @@ class Complaint {
     List<String>? imageUrls,
     List<ComplaintNote>? notes,
     List<StatusTimestamp>? statusHistory,
+    List<String>? upvotedBy,
+    int? upvoteCount,
   }) {
     return Complaint(
       id: id ?? this.id,
@@ -177,6 +190,8 @@ class Complaint {
       imageUrls: imageUrls ?? this.imageUrls,
       notes: notes ?? this.notes,
       statusHistory: statusHistory ?? this.statusHistory,
+      upvotedBy: upvotedBy ?? this.upvotedBy,
+      upvoteCount: upvoteCount ?? this.upvoteCount,
     );
   }
 }

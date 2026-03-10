@@ -130,13 +130,11 @@ class AppTheme {
 
   // Light Theme
   static ThemeData get lightTheme {
-    final colorScheme = ColorScheme.light(
-      background: _lightBackground,
+    final colorScheme = const ColorScheme.light(
       surface: _lightSurface,
       primary: _lightPrimary,
       secondary: _lightSecondary,
       error: _lightError,
-      onBackground: _lightOnBackground,
       onSurface: _lightOnSurface,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
@@ -271,13 +269,11 @@ class AppTheme {
 
   // Dark Theme
   static ThemeData get darkTheme {
-    final colorScheme = ColorScheme.dark(
-      background: _darkBackground,
+    final colorScheme = const ColorScheme.dark(
       surface: _darkSurface,
       primary: _darkPrimary,
       secondary: _darkSecondary,
       error: _darkError,
-      onBackground: _darkOnBackground,
       onSurface: _darkOnSurface,
       onPrimary: Colors.white,
       onSecondary: _darkBackground,

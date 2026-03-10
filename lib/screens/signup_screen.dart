@@ -99,7 +99,7 @@ class _SignupScreenState extends State<SignupScreen>
                         ),
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.person_add_rounded,
                         size: 40,
                         color: Colors.white,

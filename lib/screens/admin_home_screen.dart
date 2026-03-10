@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/complaint_provider.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/offline_indicator.dart';
@@ -379,6 +380,24 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.thumb_up,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${complaint.upvoteCount} upvotes',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     'Submitted: ${_formatDate(complaint.timestamp)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -433,6 +452,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        onPressed: () => _showDeleteDialog(context, complaint.id, complaintProvider),
+                        tooltip: 'Delete Complaint',
+                      ),
                     ],
                   ),
                 ],
@@ -474,38 +501,46 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     }
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'maintenance':
-        return Colors.blue;
-      case 'cleanliness':
-        return Colors.green;
-      case 'food':
-        return Colors.orange;
-      case 'security':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'urgent':
-        return const Color(0xFFEF4444);
-      case 'high':
-        return const Color(0xFFF97316);
-      case 'medium':
-        return const Color(0xFFF59E0B);
-      case 'low':
-        return const Color(0xFF10B981);
-      default:
-        return const Color(0xFF6B7280);
-    }
-  }
-
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showDeleteDialog(BuildContext context, String complaintId, ComplaintProvider complaintProvider) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Complaint'),
+        content: const Text('Are you sure you want to delete this complaint? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true && context.mounted) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user!.uid;
+      final success = await complaintProvider.deleteComplaint(complaintId, userId, isAdmin: true);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success ? 'Complaint deleted successfully' : 'Failed to delete complaint'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 

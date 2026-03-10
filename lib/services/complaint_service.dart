@@ -88,6 +88,7 @@ class ComplaintService {
 
   Future<void> updateComplaint({
     required String complaintId,
+    required String userId,
     String? category,
     String? description,
     String? priority,
@@ -102,6 +103,11 @@ class ComplaintService {
       }
 
       final complaint = Complaint.fromJson({...doc.data()!, 'id': doc.id});
+
+      // Only the complaint owner can edit
+      if (complaint.userId != userId) {
+        throw Exception('You do not have permission to edit this complaint');
+      }
 
       // Only allow editing if status is Pending
       if (!complaint.canEdit) {
@@ -122,7 +128,7 @@ class ComplaintService {
     }
   }
 
-  Future<void> deleteComplaint(String complaintId) async {
+  Future<void> deleteComplaint(String complaintId, String userId, {bool isAdmin = false}) async {
     try {
       final docRef = _firestore.collection('complaints').doc(complaintId);
       final doc = await docRef.get();
@@ -133,10 +139,19 @@ class ComplaintService {
 
       final complaint = Complaint.fromJson({...doc.data()!, 'id': doc.id});
 
-      // Only allow deleting if status is Pending
-      if (!complaint.canDelete) {
-        throw Exception('Cannot delete complaint - it is already being processed');
+      // Check permissions
+      if (!isAdmin) {
+        // Regular users can only delete their own complaints
+        if (complaint.userId != userId) {
+          throw Exception('You do not have permission to delete this complaint');
+        }
+        
+        // Only allow deleting if status is Pending
+        if (!complaint.canDelete) {
+          throw Exception('Cannot delete complaint - it is already being processed');
+        }
       }
+      // Admins can delete any complaint regardless of status
 
       await docRef.delete();
     } catch (e) {
@@ -222,5 +237,38 @@ class ComplaintService {
         return Complaint.fromJson(data);
       }).toList();
     });
+  }
+
+  // Upvote/downvote complaint
+  Future<void> toggleUpvote(String complaintId, String userId) async {
+    try {
+      final docRef = _firestore.collection('complaints').doc(complaintId);
+      
+      await _firestore.runTransaction((transaction) async {
+        final doc = await transaction.get(docRef);
+        
+        if (!doc.exists) {
+          throw Exception('Complaint not found');
+        }
+
+        final data = doc.data()!;
+        final upvotedBy = List<String>.from(data['upvotedBy'] ?? []);
+        
+        if (upvotedBy.contains(userId)) {
+          // Remove upvote
+          upvotedBy.remove(userId);
+        } else {
+          // Add upvote
+          upvotedBy.add(userId);
+        }
+
+        transaction.update(docRef, {
+          'upvotedBy': upvotedBy,
+          'upvoteCount': upvotedBy.length,
+        });
+      });
+    } catch (e) {
+      throw Exception('Failed to toggle upvote: $e');
+    }
   }
 }

@@ -274,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen>
                     // Divider
                     Row(
                       children: [
-                        Expanded(child: Divider()),
+                        const Expanded(child: Divider()),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppTheme.spacing16,
@@ -284,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen>
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
-                        Expanded(child: Divider()),
+                        const Expanded(child: Divider()),
                       ],
                     ),
 

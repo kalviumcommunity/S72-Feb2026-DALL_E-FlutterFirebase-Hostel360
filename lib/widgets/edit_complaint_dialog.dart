@@ -147,7 +147,7 @@ class _EditComplaintDialogState extends State<EditComplaintDialog> {
 
                 // Category dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category',
                     prefixIcon: Icon(Icons.category_outlined),
@@ -176,7 +176,7 @@ class _EditComplaintDialogState extends State<EditComplaintDialog> {
 
                 // Priority dropdown
                 DropdownButtonFormField<String>(
-                  value: _selectedPriority,
+                  initialValue: _selectedPriority,
                   decoration: const InputDecoration(
                     labelText: 'Priority',
                     prefixIcon: Icon(Icons.flag_outlined),

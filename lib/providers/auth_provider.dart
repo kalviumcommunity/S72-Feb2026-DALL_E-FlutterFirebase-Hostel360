@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
+import '../services/mock_auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
@@ -24,10 +25,16 @@ class AuthProvider extends ChangeNotifier {
     FirebaseFirestore? firestore,
   })  : _authService = authService ?? AuthService(),
         _firestore = firestore ?? FirebaseFirestore.instance {
-    _authService.authStateChanges().listen((User? user) async {
+    // Initialize current user
+    _currentUser = FirebaseAuth.instance.currentUser;
+    
+    // Listen to auth state changes
+    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
+      print('Auth state changed: ${user?.email ?? 'null'}'); // Debug log
       _currentUser = user;
       if (user != null) {
         _userRole = await getUserRole(user.uid);
+        print('User role set to: $_userRole'); // Debug log
       } else {
         _userRole = null;
       }
@@ -42,6 +49,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       final userCredential = await _authService.signUp(email, password);
+      print('Sign up successful: ${userCredential.user?.email}'); // Debug log
       
       // Store user role in Firestore
       await _firestore.collection('users').doc(userCredential.user!.uid).set({
@@ -50,20 +58,22 @@ class AuthProvider extends ChangeNotifier {
         'role': role,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      print('User role stored in Firestore: $role'); // Debug log
 
-      _currentUser = userCredential.user;
-      _userRole = role;
+      // The auth state listener will handle updating _currentUser and _userRole
       _isLoading = false;
       notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
       _errorMessage = _getErrorMessage(e);
+      print('Sign up error: $_errorMessage'); // Debug log
       notifyListeners();
       return false;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'An unexpected error occurred';
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      print('Sign up error: $_errorMessage'); // Debug log
       notifyListeners();
       return false;
     }
@@ -76,20 +86,22 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       final userCredential = await _authService.signIn(email, password);
-      _currentUser = userCredential.user;
-      _userRole = await getUserRole(userCredential.user!.uid);
+      print('Sign in successful: ${userCredential.user?.email}'); // Debug log
       
+      // The auth state listener will handle updating _currentUser and _userRole
       _isLoading = false;
       notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
       _isLoading = false;
       _errorMessage = _getErrorMessage(e);
+      print('Sign in error: $_errorMessage'); // Debug log
       notifyListeners();
       return false;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'An unexpected error occurred';
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      print('Sign in error: $_errorMessage'); // Debug log
       notifyListeners();
       return false;
     }
@@ -98,8 +110,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     try {
       await _authService.signOut();
-      _currentUser = null;
-      _userRole = null;
+      // The auth state listener will handle clearing _currentUser and _userRole
       _errorMessage = null;
       notifyListeners();
     } catch (e) {
@@ -110,13 +121,19 @@ class AuthProvider extends ChangeNotifier {
 
   Future<String?> getUserRole(String uid) async {
     try {
+      print('Fetching role for user: $uid'); // Debug log
       final doc = await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
-        return doc.data()?['role'] as String?;
+        final role = doc.data()?['role'] as String?;
+        print('Found role: $role'); // Debug log
+        return role;
+      } else {
+        print('No user document found, defaulting to student'); // Debug log
+        return 'student'; // Default to student if no role found
       }
-      return null;
     } catch (e) {
-      return null;
+      print('Error fetching user role: $e'); // Debug log
+      return 'student'; // Default to student on error
     }
   }
 

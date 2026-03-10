@@ -32,10 +32,10 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const Divider(),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('App Version'),
-            subtitle: const Text('1.0.0'),
+          const ListTile(
+            leading: Icon(Icons.info),
+            title: Text('App Version'),
+            subtitle: Text('1.0.0'),
           ),
           const Divider(),
           ListTile(

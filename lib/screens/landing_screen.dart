@@ -156,20 +156,20 @@ class _LandingScreenState extends State<LandingScreen> {
                     const SizedBox(height: 40),
                     
                     // Key Benefits
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: Column(
                         children: [
                           _BenefitRow(
                             icon: Icons.speed_rounded,
                             text: 'Fast complaint resolution',
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           _BenefitRow(
                             icon: Icons.notifications_active_rounded,
                             text: 'Real-time notifications',
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12),
                           _BenefitRow(
                             icon: Icons.security_rounded,
                             text: 'Secure and reliable',
@@ -288,6 +288,7 @@ class _FeatureCard extends StatelessWidget {
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(16),
@@ -301,7 +302,7 @@ class _FeatureCard extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Text(
             feature.title,
             style: theme.textTheme.titleLarge?.copyWith(
@@ -309,13 +310,15 @@ class _FeatureCard extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             feature.description,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
