@@ -294,6 +294,71 @@ class _LoginScreenState extends State<LoginScreen>
 
                     const SizedBox(height: AppTheme.spacing24),
 
+                    // Google Sign-In button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: authProvider.isLoading
+                            ? null
+                            : () async {
+                                authProvider.clearError();
+                                final success =
+                                    await authProvider.signInWithGoogle();
+                                if (success && mounted) {
+                                  Navigator.of(context)
+                                      .popUntil((route) => route.isFirst);
+                                }
+                              },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .outline
+                                .withOpacity(0.3),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusMedium),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Google "G" logo
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'G',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF4285F4),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spacing12),
+                            Text(
+                              'Sign in with Google',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppTheme.spacing16),
+
                     // Sign up button
                     CustomButton(
                       text: 'Create Account',

@@ -107,6 +107,54 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> signInWithGoogle() async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final userCredential = await _authService.signInWithGoogle();
+      final user = userCredential.user;
+      print('Google sign in successful: ${user?.email}'); // Debug log
+
+      if (user != null) {
+        // Check if user doc already exists in Firestore
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+        if (!doc.exists) {
+          // First-time Google sign-in: create user doc with default 'student' role
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email,
+            'name': user.displayName ?? '',
+            'role': 'student',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          print('Created Firestore user doc for Google user with role: student');
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _isLoading = false;
+      _errorMessage = _getErrorMessage(e);
+      print('Google sign in error: $_errorMessage');
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _isLoading = false;
+      final msg = e.toString().replaceAll('Exception: ', '');
+      // Don't show error if user just cancelled the Google sign-in
+      if (!msg.contains('cancelled')) {
+        _errorMessage = msg;
+      }
+      print('Google sign in error: $msg');
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _authService.signOut();
