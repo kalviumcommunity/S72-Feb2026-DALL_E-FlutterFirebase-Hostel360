@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
@@ -14,27 +15,49 @@ class LandingScreen extends StatefulWidget {
 class _LandingScreenState extends State<LandingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  Timer? _timer;
 
-  final List<_FeatureItem> _features = [
-    _FeatureItem(
-      icon: Icons.report_problem_outlined,
-      title: 'Submit Complaints',
-      description: 'Easily report hostel issues with detailed descriptions and priority levels',
+  final List<_CarouselItem> _carouselItems = [
+    _CarouselItem(
+      imagePath: 'assets/images/hostel-360.png',
+      description: 'Complete hostel management at your fingertips',
     ),
-    _FeatureItem(
-      icon: Icons.track_changes_outlined,
-      title: 'Track Status',
-      description: 'Monitor your complaint status in real-time from submission to resolution',
+    _CarouselItem(
+      imagePath: 'assets/images/bathroom.png',
+      description: 'Report maintenance issues instantly',
     ),
-    _FeatureItem(
-      icon: Icons.admin_panel_settings_outlined,
-      title: 'Admin Dashboard',
-      description: 'Comprehensive management tools with analytics and metrics for administrators',
+    _CarouselItem(
+      imagePath: 'assets/images/fixing-sink.png',
+      description: 'Track repairs and resolutions in real-time',
+    ),
+    _CarouselItem(
+      imagePath: 'assets/images/using-phone.png',
+      description: 'Stay connected with instant notifications',
     ),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _startAutoRotation();
+  }
+
+  void _startAutoRotation() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_pageController.hasClients) {
+        final nextPage = (_currentPage + 1) % _carouselItems.length;
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _timer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -66,13 +89,13 @@ class _LandingScreenState extends State<LandingScreen> {
                 ],
               ),
             ),
-            
+
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
-                    
+
                     // Logo and Title
                     Container(
                       width: 100,
@@ -93,7 +116,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     Text(
                       'Hostel360',
                       style: theme.textTheme.headlineLarge?.copyWith(
@@ -101,7 +124,7 @@ class _LandingScreenState extends State<LandingScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    
+
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
@@ -112,12 +135,12 @@ class _LandingScreenState extends State<LandingScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
-                    
-                    // Features Carousel
+
+                    // Image Carousel — fixed height matches card content exactly
                     SizedBox(
-                      height: 200,
+                      height: 240,
                       child: PageView.builder(
                         controller: _pageController,
                         onPageChanged: (index) {
@@ -125,20 +148,20 @@ class _LandingScreenState extends State<LandingScreen> {
                             _currentPage = index;
                           });
                         },
-                        itemCount: _features.length,
+                        itemCount: _carouselItems.length,
                         itemBuilder: (context, index) {
-                          return _FeatureCard(feature: _features[index]);
+                          return _ImageCarouselCard(item: _carouselItems[index]);
                         },
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Page Indicators
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        _features.length,
+                        _carouselItems.length,
                         (index) => Container(
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           width: _currentPage == index ? 24 : 8,
@@ -152,9 +175,9 @@ class _LandingScreenState extends State<LandingScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
-                    
+
                     // Key Benefits
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 24),
@@ -177,9 +200,9 @@ class _LandingScreenState extends State<LandingScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
-                    
+
                     // CTA Buttons
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -241,7 +264,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -254,71 +277,77 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 }
 
-class _FeatureItem {
-  final IconData icon;
-  final String title;
+class _CarouselItem {
+  final String imagePath;
   final String description;
 
-  _FeatureItem({
-    required this.icon,
-    required this.title,
+  _CarouselItem({
+    required this.imagePath,
     required this.description,
   });
 }
 
-class _FeatureCard extends StatelessWidget {
-  final _FeatureItem feature;
+class _ImageCarouselCard extends StatelessWidget {
+  final _CarouselItem item;
 
-  const _FeatureCard({required this.feature});
+  const _ImageCarouselCard({required this.item});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 6),
+      // No explicit height — let the Column children define it naturally
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.2),
-          width: 1,
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.min, // shrink-wrap to content
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              feature.icon,
-              size: 40,
-              color: theme.colorScheme.primary,
+          // Image — fixed height
+          SizedBox(
+            height: 170,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.asset(
+                item.imagePath,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Icon(
+                      Icons.image_not_supported,
+                      size: 28,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            feature.title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+          // Description text — fixed height to stay within the SizedBox
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Text(
+              item.description,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w500,
+                height: 1.3,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            feature.description,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -338,7 +367,7 @@ class _BenefitRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Row(
       children: [
         Container(

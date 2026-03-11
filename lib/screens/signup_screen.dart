@@ -275,6 +275,50 @@ class _SignupScreenState extends State<SignupScreen>
                                   },
                             isLoading: authProvider.isLoading,
                           ),
+                          const SizedBox(height: 16),
+                          // Google Sign-In Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: authProvider.isLoading
+                                  ? null
+                                  : () async {
+                                      authProvider.clearError();
+                                      final success = await authProvider.signInWithGoogle();
+                                      if (success && mounted) {
+                                        Navigator.of(context).popUntil((route) => route.isFirst);
+                                      }
+                                    },
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.surface,
+                                side: BorderSide(
+                                  color: theme.colorScheme.outline.withOpacity(0.4),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/google.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Sign up with Google',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           // Login Link
                           Row(

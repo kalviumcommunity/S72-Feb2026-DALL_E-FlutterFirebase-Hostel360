@@ -325,22 +325,10 @@ class _LoginScreenState extends State<LoginScreen>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Google "G" logo
-                            Container(
+                            Image.asset(
+                              'assets/images/google.png',
                               width: 24,
                               height: 24,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'G',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF4285F4),
-                                ),
-                              ),
                             ),
                             const SizedBox(width: AppTheme.spacing12),
                             Text(
